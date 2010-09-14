@@ -32,19 +32,20 @@ trait KExprParser extends JavaTokenParsers with ImplicitConversions {
 
   private type E = KExpr
 
-  lazy val identifier = """[-_0-9a-zA-Z]+""".r ^^ Id
+  val identifier = """[-_0-9a-zA-Z]+""".r ^^ Id
 
-  lazy val lit =  ("\"" + """\S*""" + "\"").r ^^
+  val lit = ("\"\\S*\"").r ^^
       {
-        case "\"y\"" | "\"Y\"" => Yes
+        case "\"y\"" => Yes
+        case "\"Y\"" => Yes
         case "\"m\"" | "\"M\"" => Mod
         case "\"n\"" | "\"N\"" => No
         case str => Literal(str.substring(1, str.length - 1))
       }
 
-  lazy val hex = """0x[0-9a-fA-F]+""".r ^^ KHex
+  val hex = """0x[0-9a-fA-F]+""".r ^^ KHex
 
-  lazy val idOrValue : Parser[IdOrValue] =
+  val idOrValue : Parser[IdOrValue] =
     "<choice>" ^^^ Yes | lit | hex | "[-_0-9a-zA-Z]+".r ^^
       {
         case "y" | "Y" => Yes

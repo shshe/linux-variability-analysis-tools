@@ -28,7 +28,7 @@ import java.io.PrintStream
  * @author Steven She (shshe@gsd.uwaterloo.ca)
  */
 object BooleanTranslationMain extends KConfigParser
-        with AbstractSyntax with BooleanTranslation with BooleanRewriter {
+        with AbstractSyntax with BooleanTranslation {
 
   def main(args: Array[String]) : Unit = {
     if (args.size == 0)

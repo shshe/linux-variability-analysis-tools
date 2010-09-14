@@ -33,7 +33,7 @@ import kiama.rewriting.Rewriter
  *
  * @author Steven She (shshe@gsd.uwaterloo.ca)
  */
-trait BooleanTranslation extends KExprList with BExprList with BooleanRewriter {
+trait BooleanTranslation extends KExprList with BExprList with ExprRewriter {
 
   case class BTrans(exprs: List[BExpr], genVars: List[String])
 
@@ -65,7 +65,7 @@ trait BooleanTranslation extends KExprList with BExprList with BooleanRewriter {
       case And(x, y) => BAnd(translate(x), translate(y))
       case Or(x, y) => BOr(translate(x), translate(y))
 
-      case Not(e) => BNot(translate(e))
+      case Not(e) => BNot(translate(e)) //TODO Check this, may make a constraint stronger
       case Id(n) => BId(n)
 
       case e => error("Unexpected: " + e + ": " + e.getClass)
@@ -76,8 +76,6 @@ trait BooleanTranslation extends KExprList with BExprList with BooleanRewriter {
   /**
    * Factors out common sub-expressions from a list of disjunctions. This is
    * not used in the current implementation.
-   *
-   * FIXME ends up with a recursive loop
    */
   def factor(in: List[BExpr]): BExpr = {
     def _fact(disjs: List[BExpr]) : List[BExpr] = {
@@ -103,6 +101,68 @@ trait BooleanTranslation extends KExprList with BExprList with BooleanRewriter {
     _fact(in).mkDisjunction
   }
 
+  /**
+   * Construct a list containing first i elements, the ith element is the
+   * current default being processed, the 0 to i-1 elements are the previous
+   * default conditions. Negate all previous default conditions and conjoin it
+   * with the current default condition.
+   */
+  def mkDefaults(defs: List[Default]): List[BExpr] = {
+
+    /**
+     * Chunks defaults such that each list of defaults has the same consecutive
+     * default values (ie. Default.iv)
+     */
+    def chunkDefaults(defs: List[Default]): List[List[Default]] = defs match {
+      case Nil => Nil
+      case Default(iv, _) :: _ =>
+        val (same, rest) = defs.partition {_.iv == iv}
+        same :: chunkDefaults(rest)
+    }
+
+    def negateDefaults(prevs: List[Default]) =
+      ((True: BExpr) /: prevs) {(x, y) => x && !toBExpr(y.cond)}
+
+    /**
+     * Chunk defaults and reverse such that the last default chunk is first.
+     * This is necessary since doChunks negates the tail, which is the first n-1
+     * defaults when the list is reversed.
+     *
+     * For example, given defaults [X,Y,Z], the reverse is [Z,Y,X]. doChunks will
+     * process Z first, with [Y,X] as the tail. Z is the last default, and thus,
+     * must negate Y and X.
+     */
+    def doChunks(prevs: List[List[Default]])(acc: List[BExpr]): List[BExpr] =
+      prevs match {
+        case Nil => acc
+        case lst :: rest =>
+          val negatedPrev = negateDefaults(rest.flatten[Default])
+          doChunks(rest) {
+
+            //Remove defaults with value 'No' or Literal("")
+            lst.remove { case Default(iv, _) => iv == No || iv == Literal("") }
+                    .map {
+              case Default(Yes, c) => negatedPrev && toBExpr(c)
+              case Default(Mod, c) => negatedPrev && toBExpr(c)
+              case Default(v: Value, c)   => negatedPrev && toBExpr(c)
+              case Default(iv, c) => negatedPrev && toBExpr(c && iv)
+            } ++ acc
+          }
+      }
+
+    doChunks(chunkDefaults(defs).reverse)(Nil)
+  }
+
+  /**
+   * Determines when a KExpr, after translating to a BExpr, when used as an
+   * antecedent, would be too constraining.
+   */
+  def isTooConstraining(e: KExpr): Boolean =
+    KExprRewriter.count { case _ : Eq | _ : NEq => 1}(e) > 0
+
+  def isTooConstraining(d: Default): Boolean =
+    isTooConstraining(d.iv) || isTooConstraining(d.cond)
+
 
   def mkPresence(k: AbstractKConfig): BTrans = {
 
@@ -117,61 +177,6 @@ trait BooleanTranslation extends KExprList with BExprList with BooleanRewriter {
       def allIds = (1 to i).map { "x" + _ }.toList
       def next = { i+=1; "x" + i }
     }
-
-    /**
-     * Construct a list containing first i elements, the ith element is the
-     * current default being processed, the 0 to i-1 elements are the previous
-     * default conditions. Negate all previous default conditions and conjoin it
-     * with the current default condition.
-     */
-    def mkDefaults(defs: List[Default]): List[BExpr] = {
-
-      /**
-       * Chunks defaults such that each list of defaults has the same consecutive
-       * default values (ie. Default.iv)
-       */
-      def chunkDefaults(defs: List[Default]): List[List[Default]] = defs match {
-        case Nil => Nil
-        case Default(iv, _) :: _ =>
-          val (same, rest) = defs.partition {_.iv == iv}
-          same :: chunkDefaults(rest)
-      }
-
-      def negateDefaults(prevs: List[Default]) =
-        ((True: BExpr) /: prevs) {(x, y) => x && !toBExpr(y.cond)}
-
-      /**
-       * Chunk defaults and reverse such that the last default chunk is first.
-       * This is necessary since doChunks negates the tail, which is the first n-1
-       * defaults when the list is reversed.
-       *
-       * For example, given defaults [X,Y,Z], the reverse is [Z,Y,X]. doChunks will
-       * process Z first, with [Y,X] as the tail. Z is the last default, and thus,
-       * must negate Y and X.
-       */
-      def doChunks(prevs: List[List[Default]])(acc: List[BExpr]): List[BExpr] =
-        prevs match {
-          case Nil => acc
-          case lst :: rest =>
-            val negatedPrev = negateDefaults(rest.flatten[Default])
-            doChunks(rest) {
-
-              //Remove defaults with value 'No' or Literal("")
-              lst.remove { case Default(iv, _) => iv == No || iv == Literal("") }
-                .map {
-                  case Default(Yes, c) => negatedPrev && toBExpr(c)
-                  case Default(Mod, c) => negatedPrev && toBExpr(c)
-                  case Default(v: Value, c)   => negatedPrev && toBExpr(c)
-                  case Default(iv, c) => negatedPrev && toBExpr(c && iv)
-                } ++ acc
-            }
-        }
-
-      doChunks(chunkDefaults(defs).reverse)(Nil)
-    }
-
-    def isTooConstraining(e: BExpr): Boolean =
-      KExprRewriter.count { case _ : Eq | _ : NEq => 1}(e) > 0
 
     /**
      * Map from a sub-expression to a generated variable
@@ -193,26 +198,28 @@ trait BooleanTranslation extends KExprList with BExprList with BooleanRewriter {
      */
     val exprs = k.configs.flatMap {
       case AConfig(id, _, _, pro, defs, krevs, _) =>
-        val proE     = toBExpr(pro)
-        val revDepE  = krevs.map(toBExpr) ::: mkDefaults(defs)
-        val numOfIds = (0 /: (proE :: revDepE))( (x,y) => x + identifiers(y).size)
+        val proE   = toBExpr(pro)
+
+        //Reverse dependency and defaults
+        val asAnte = krevs.remove(isTooConstraining).map(toBExpr) ::: 
+                mkDefaults(defs.remove(isTooConstraining))
+        val asCons = krevs.map(toBExpr) ::: mkDefaults(defs)
+        val numOfIds = identifiers(proE).size + identifiers(asCons).size
 
         //Heuristic for estimating size of resulting CNF translation
-        if (numOfIds < 40 && revDepE.size < 5) {
-          val ante = revDepE.remove(isTooConstraining).mkDisjunction
-          val conseq = revDepE.mkDisjunction
-          (proE || (ante implies BId(id)) && (BId(id) implies conseq)) :: Nil
-        }
+        if (numOfIds < 40 && asCons.size < 5)
+          (proE || (asAnte.mkDisjunction implies BId(id)) &&
+                  (BId(id) implies asCons.mkDisjunction)) :: Nil
         else {
-          val ante = replaceWithVars(revDepE.remove(isTooConstraining)).mkDisjunction
-          val conseq = replaceWithVars(revDepE).mkDisjunction
-          val equivs = revDepE.map { e => cache(e) iff factor(e.splitDisjunctions) }
-          (proE || (ante implies BId(id)) && (BId(id) implies conseq)) :: equivs
+          val equivs = asCons.map { e => cache(e) iff factor(e.splitDisjunctions) }
+          (proE || (replaceWithVars(asAnte).mkDisjunction implies BId(id)) &&
+                  (BId(id) implies replaceWithVars(asCons).mkDisjunction)) :: equivs
         }
     }
 
     BTrans(exprs, IdGen.allIds)
   }
+
 
   def mkInherited(k: AbstractKConfig): List[BExpr] = k.configs.map {
     case AConfig(id, t, vis, pro, defs, rev, rngs) => BId(id) implies toBExpr(vis)
@@ -241,10 +248,13 @@ trait BooleanTranslation extends KExprList with BExprList with BooleanRewriter {
   }
 }
 
-trait BooleanRewriter extends Rewriter {
+trait ExprRewriter extends Rewriter {
   def identifiers(e: BExpr): Set[String] = collects {
     case BId(n) => n
   }(e)
+
+  def identifiers(es: Iterable[BExpr]): Set[String] = Set() ++ es.flatMap(identifiers)
+
 }
 
 object BooleanTranslation extends BooleanTranslation

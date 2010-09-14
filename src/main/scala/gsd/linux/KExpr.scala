@@ -60,13 +60,14 @@ case class Eq (l: IdOrValue, r: IdOrValue) extends BinaryOp(l, r, "=")
 case class NEq(l: IdOrValue, r: IdOrValue) extends BinaryOp(l, r, "!=")
 case class Not(e: KExpr) extends UnaryOp(e, "!")
 
-sealed abstract class IdOrValue extends KExpr(Nil)
+sealed abstract class IdOrValue extends KExpr(Nil) {
+  def eq(other: IdOrValue): KExpr = Eq(this, other)
+}
 sealed abstract class Value extends IdOrValue
-sealed abstract class Number extends Value
 case class Id(value : String) extends IdOrValue
 case class Literal(value : String) extends Value
-case class KInt(value : Int) extends Number
-case class KHex(value : String) extends Number
+case class KInt(value : Int) extends Value
+case class KHex(value : String) extends Value
 case object Yes extends Value
 case object No  extends Value
 case object Mod extends Value

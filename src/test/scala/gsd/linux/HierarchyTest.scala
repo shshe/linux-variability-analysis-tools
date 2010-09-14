@@ -23,14 +23,17 @@ package gsd.linux
 import org.scalatest.junit.AssertionsForJUnit
 import org.junit.Test
 
-class HierarchyTest extends AssertionsForJUnit with KConfigBuilder with Hierarchy {
+import Hierarchy._
+
+class HierarchyTest extends AssertionsForJUnit with KConfigBuilder {
+
   @Test def testParentMapEasy {
-    val k = mkBConfig("A", Nil, List(
+    val k = mkRoot(List(mkBConfig("A", Nil, List(
       mkBConfig("B", Nil, List(
         mkBConfig("D", Nil, Nil))),
-      mkBConfig("C", Nil, Nil)))
+      mkBConfig("C", Nil, Nil)))))
 
-    val pMap = toIdMap(mkParentMap(mkRoot(List(k))), "_ROOT")
+    val pMap = toStringMap(mkConfigMap(k), k.allConfigs, "_ROOT")
     assert(pMap("A") == "_ROOT")
     assert(pMap("B") == "A")
     assert(pMap("C") == "A")
@@ -38,12 +41,12 @@ class HierarchyTest extends AssertionsForJUnit with KConfigBuilder with Hierarch
   }
 
   @Test def testParentMapWithMenus {
-    val k = mkBConfig("A", Nil, List(
+    val k = mkRoot(List(mkBConfig("A", Nil, List(
     mkMenu("Doesn't Matter", Yes, List(
       mkBConfig("B", Nil, List(
-        mkBConfig("C", Nil, Nil)))))))
+        mkBConfig("C", Nil, Nil)))))))))
 
-    val pMap = toIdMap(mkParentMap(mkRoot(List(k))), "_ROOT")
+    val pMap = toStringMap(mkConfigMap(k), k.allConfigs, "_ROOT")
     assert(pMap("A") == "_ROOT")
     assert(pMap("B") == "A")
     assert(pMap("C") == "B")

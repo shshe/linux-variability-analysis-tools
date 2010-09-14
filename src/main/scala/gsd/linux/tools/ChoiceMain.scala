@@ -38,8 +38,41 @@ object ChoiceMain {
     val extract = KConfigParser.parseKConfigFile(args first)
     val out = if (args.size > 1) new PrintStream(args(1)) else System.out
 
-    extract.choices.foreach { c =>
-      out println c.children.map(_.id).mkString(",")
+    val mutex = extract.choices filter {
+      case CChoice(_,true,false,_,_) => true
+      case _ => false
+    }
+    val xor   = extract.choices filter {
+      case CChoice(Prompt(_,Yes),true,true,_,_) => true
+      case _ => false
+    }
+    val xorC  = (extract.choices filter {
+      case CChoice(_,true,true,_,_) => true
+      case _ => false
+    }) -- xor
+    val or    = extract.choices filter {
+      case CChoice(_,false,true,_,_) => true
+      case _ => false
+    }
+
+    println("=== Mutex Groups ===")
+    mutex foreach { g =>
+      out println (g.children map { _.id } mkString ",")
+    }
+
+    println("=== Xor Groups ===")
+    xor foreach { g =>
+      out println (g.children map { _.id } mkString ",")
+    }
+
+    println("=== Conditional Xor Groups ===")
+    xorC foreach { g =>
+      out println (g.children map { _.id } mkString ",")
+    }
+
+    println("=== Or Groups ===")
+    or foreach { g =>
+      out println (g.children map { _.id } mkString ",")
     }
   }
 }

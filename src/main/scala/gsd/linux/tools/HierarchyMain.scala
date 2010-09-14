@@ -22,6 +22,7 @@ package gsd.linux
 import java.io.PrintStream
 
 import KConfigParser._
+import Hierarchy._
 
 /**
  * Outputs the config hierarchy of a Kconfig model. The config hierarchy is one
@@ -32,7 +33,7 @@ import KConfigParser._
  *
  * @author Steven She (shshe@gsd.uwaterloo.ca)
  */
-object HierarchyMain extends Hierarchy {
+object HierarchyMain {
 
   def main(args: Array[String]): Unit = {
     if (args.size == 0) {
@@ -40,11 +41,11 @@ object HierarchyMain extends Hierarchy {
       System.exit(1)
     }
 
-    val extract = parseKConfigFile(args first)
+    val k = parseKConfigFile(args first)
     val out = if (args.size > 1) new PrintStream(args(1))
                  else System.out
 
-    toIdMap(mkParentMap(extract), "^").foreach { case (k,v) =>
+    toStringMap(mkConfigMap(k), k.allConfigs, "^").foreach { case (k,v) =>
       out.println(k + "," + v)
     }
     out.close

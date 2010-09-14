@@ -39,8 +39,16 @@ trait AbstractSyntax extends Rewriter {
     }
     defs ::: List(Default(baseDef, Yes))
   }
+  
+  def mkAChoice(c: CChoice) = c match {
+    case CChoice(Prompt(_,vis),isBool,isMand,defs,cs) =>
+      AChoice(vis, isBool, isMand, cs map { _.id })
+  }
+
 
 }
+
+object AbstractSyntax extends AbstractSyntax
 
 /**
  * Creates the abstract syntax representation of a concrete KConfig model.
@@ -109,10 +117,8 @@ class AbstractSyntaxBuilder(k: ConcreteKConfig) extends AbstractSyntax
     }(k)
     
     val choices = collectl {
-      case CChoice(Prompt(_,vis),isBool,isMand,defs,cs) =>
-        AChoice(vis,isBool,isMand,cs.map(_.id))
+      case c: CChoice => mkAChoice(c)
     }(k)
-
     AbstractKConfig(configs, choices)
   }
 }

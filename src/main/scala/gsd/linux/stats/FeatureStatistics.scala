@@ -78,7 +78,7 @@ trait FeatureStatistics extends Rewriter with TypeFilterList {
   lazy val mandMenus = menus.filter { _.prompt.cond != Yes }
   
   lazy val leafDepthMap : Map[CSymbol, Int] = {
-    def addChildren(depth: Int)(elem: CSymbol) : List[Tuple2[CSymbol,Int]] =
+    def addChildren(depth: Int)(elem: CSymbol) : List[(CSymbol,Int)] =
       if (elem.children.isEmpty)
         (elem, depth) :: elem.children.flatMap { addChildren(depth+1) }
       else elem.children.flatMap { addChildren(depth+1) }
@@ -91,7 +91,7 @@ trait FeatureStatistics extends Rewriter with TypeFilterList {
 
   lazy val parentTuples = collectl {
     case c:CSymbol => c.children.map { _.id -> c.id }
-  }(k).flatten[Tuple2[String,String]]
+  }(k).flatten[(String,String)]
   
   lazy val parentMap = Map() ++ parentTuples
 

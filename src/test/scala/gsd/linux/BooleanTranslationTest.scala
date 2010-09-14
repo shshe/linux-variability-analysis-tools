@@ -23,8 +23,10 @@ package gsd.linux
 import org.scalatest.junit.AssertionsForJUnit
 import org.junit.{Ignore, Test}
 
+import KConfigParser._
+
 class BooleanTranslationTest extends AssertionsForJUnit with BooleanTranslation
-    with KConfigParser with AbstractSyntax {
+    with AbstractSyntax {
   
   implicit def toId(s: String) = Id(s)
 
@@ -37,11 +39,18 @@ class BooleanTranslationTest extends AssertionsForJUnit with BooleanTranslation
     assert(toBExpr(Eq("A",Literal("")) && Eq("B",Literal("xyz"))) == BAnd(BNot(BId("A")), BId("B")))
   }
 
-//  @Test def reverseDependency {
-//    println(mkReverseDependency(List("A" && "B" && "C", "B" && "C", "C" && "D")))
-//    assert(mkReverseDependency(List("A" && "B" && "C", "B" && "C", "C" && "D")) ==
-//            (BId("C") && (BId("A") && BId("B") || BId("B") || BId("D"))))
-//    println(mkReverseDependency(List("A" && "B" && "C", "A" && "B")))
-//  }
+  @Test def testIsTooConstrainingKExpr {
+    assert(isTooConstraining(Eq("A","B")))
+    assert(isTooConstraining(NEq("A","B")))
+    assert(isTooConstraining(NEq("A","B") || "A" || "B"))
+    assert(!isTooConstraining("A" || "B"))
+  }
+
+  @Test def testIsTooConstrainingDefault {
+    assert(isTooConstraining(Default("A", Eq("B", "C"))))
+    assert(isTooConstraining(Default("A", NEq("C", "F") || "G")))    
+    assert(isTooConstraining(Default(Eq("A","B"), "C")))
+    assert(!isTooConstraining(Default("A", "B" || "C")))
+  }
 
 }

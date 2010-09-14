@@ -23,22 +23,45 @@ import kiama.rewriting.Rewriter
 
 case class ConcreteKConfig(root: CMenu) {
   val rw = new Object with Rewriter
-  lazy val plainConfigs = rw.collectl {
+
+  lazy val plainConfigs: List[CConfig] = rw.collectl {
     case c: CConfig if !c.isMenuConfig => c
   }(root)
 
-  lazy val menuConfigs = rw.collectl {
+  lazy val menuConfigs: List[CConfig] = rw.collectl {
     case c: CConfig if  c.isMenuConfig => c
   }(root)
 
-  lazy val allConfigs = plainConfigs ++ menuConfigs
+  lazy val allConfigs: List[CConfig] = plainConfigs ++ menuConfigs
 
-  lazy val choices = rw.collectl {
+  lazy val choices: List[CChoice] = rw.collectl {
     case c: CChoice => c
   }(root)
+
+  lazy val menus: List[CMenu] = rw.collectl {
+    case m: CMenu => m
+  }(root)
+
+  lazy val features: List[CSymbol] =
+    allConfigs ++ menus ++ choices
+
+  def toAbstractKConfig =
+    new AbstractSyntaxBuilder(this).toAbstractSyntax
 }
 
-case class AbstractKConfig(configs: List[AConfig], choices: List[AChoice])
+case class AbstractKConfig(configs: List[AConfig], choices: List[AChoice]) {
+  /**
+   * Maps an identifier to its abstract config
+   */
+  lazy val idMap: Map[String, AConfig] = Map() ++ configs.map {
+    case c: AConfig => c.id -> c
+  }
+}
+
+object AbstractKConfig {
+  implicit def fromConcreteKConfig(k: ConcreteKConfig): AbstractKConfig =
+    new AbstractSyntaxBuilder(k).toAbstractSyntax
+}
 
 sealed abstract class CSymbol(val id: String,
                               val properties: List[Property],

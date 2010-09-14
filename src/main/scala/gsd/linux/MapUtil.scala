@@ -17,30 +17,18 @@
  * along with LVAT.  (See files COPYING and COPYING.LESSER.)  If not, see
  * <http://www.gnu.org/licenses/>.
  */
+
 package gsd.linux
 
-/**
- * Conveience methods for filtering items from a List based on its type.
- */
-trait TypeFilterList {
-  class SuperList[A <: AnyRef](lst : List[A]) {
+object MapUtil {
 
-    /*
-     * Uses experimental Scala Manifests to reify types
-     */
-    def typeFilter[T](implicit m:scala.reflect.Manifest[T]) =
-      lst.filter{x:A => m.erasure.isInstance(x)}.asInstanceOf[List[T]]
-
-    def sortByType =
-      lst.sort{(x,y) => x.getClass.getName < y.getClass.getName }
+  def invertMap[T,U](map: Map[T,U]): Map[U, Set[T]] = {
+    import collection.mutable.HashMap
+    val result = new HashMap[U, Set[T]]
+    map.foreach { case (k,v) =>
+      result += v -> (result.getOrElseUpdate(v, Set()) + k)
+    }
+    Map() ++ result
   }
 
-  implicit def toSuperList[A <: AnyRef](lst: List[A]) =
-    new SuperList[A](lst)
-
-  implicit def toSuperList[A <: AnyRef](set: Set[A]) =
-    new SuperList[A](set.toList)
-  
 }
-
-object TypeFilterList extends TypeFilterList
