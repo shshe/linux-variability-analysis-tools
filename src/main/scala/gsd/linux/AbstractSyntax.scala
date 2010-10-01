@@ -59,14 +59,6 @@ class AbstractSyntaxBuilder(k: ConcreteKConfig) extends AbstractSyntax
         with TypeFilterList {
 
   /**
-   * Set of all identifiers and identifier references in the Kconfig model.
-   */
-  lazy val identifiers = collects {
-    case c: CConfig => c.id
-    case Id(n) => n
-  }(k)
-
-  /**
    * Helper function for finding a particular config, probably belongs elsewhere
    */
   def find(id: String): Option[CConfig] = {

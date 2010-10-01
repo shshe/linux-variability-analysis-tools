@@ -45,6 +45,15 @@ case class ConcreteKConfig(root: CMenu) {
   lazy val features: List[CSymbol] =
     allConfigs ++ menus ++ choices
 
+  /**
+   * Set of all identifiers and identifier references in the Kconfig model.
+   */
+  lazy val identifiers = rw.collects {
+    case c: CConfig => c.id
+    case Id(n) => n
+  }(root)
+
+
   def toAbstractKConfig =
     new AbstractSyntaxBuilder(this).toAbstractSyntax
 }
