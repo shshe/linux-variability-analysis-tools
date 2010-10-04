@@ -34,7 +34,7 @@ trait KExprParser extends JavaTokenParsers with ImplicitConversions {
 
   val identifier = """[-_0-9a-zA-Z]+""".r ^^ Id
 
-  val lit = ("\"\\S*\"").r ^^
+  val lit = ("\"[^\"]*\"").r ^^
       {
         case "\"y\"" => Yes
         case "\"Y\"" => Yes
