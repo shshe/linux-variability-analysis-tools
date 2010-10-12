@@ -24,7 +24,6 @@ import org.junit.Test
 
 import KConfigParser._
 import KExprList._
-import stats.ConstraintRewriter
 
 class AbstractSyntaxTest extends AssertionsForJUnit with KConfigBuilder
     with AbstractSyntax with AbstractSyntaxWriter {
