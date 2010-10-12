@@ -39,43 +39,53 @@ trait KConfigParser extends KExprParser with ImplicitConversions with TypeFilter
         s => s.substring(1, s.length - 1)
       }
 
-  private lazy val kType : Parser[KType] =
+  private lazy val kType: Parser[KType] =
     "boolean"  ^^^ KBoolType |
     "tristate" ^^^ KTriType |
     "integer"  ^^^ KIntType |
     "hex"      ^^^ KHexType |
     "string"   ^^^ KStringType
 
-  private lazy val exExpr = "[" ~> opt(expr) <~ "]" ^^ { _.getOrElse(Yes) }
-  private lazy val ifExpr = "if" ~> exExpr
+  private lazy val exExpr: Parser[KExpr] =
+    "[" ~> opt(expr) <~ "]" ^^ { _.getOrElse(Yes) }
 
-  private lazy val idString = identifier ^^ { case Id(s) => s }
+  private lazy val ifExpr: Parser[KExpr] =
+    "if" ~> exExpr
+
+  private lazy val idString: Parser[String] =
+    identifier ^^ { case Id(s) => s }
 
   private lazy val env =
     "env" ~> idString ~ ifExpr ^^ Env
+
   private lazy val prompt =
     "prompt" ~> strLiteral ~ ifExpr ^^ Prompt
+
   private lazy val select =
     "select" ~> idString ~ ifExpr ^^ Select
+
   private lazy val default =
     "default" ~> exExpr ~ ifExpr ^^ Default
+
   private lazy val range =
     "range" ~> "[" ~> (idOrValue) ~ (idOrValue <~ "]") ~ ifExpr ^^ Range
+
   private lazy val inherited =
     "inherited" ~> exExpr
 
-  private lazy val depends =
+  private lazy val depends: Parser[DependsOn] =
     "depends" ~> "on" ~> exExpr ^^ DependsOn
 
   private lazy val property = prompt | depends | default | range | select | env
 
-  private lazy val kconfig = syms ^^
-        {
-          s => ConcreteKConfig(CMenu(Prompt(rootId,Yes), s))
-        }
+  private lazy val kconfig: Parser[ConcreteKConfig] =
+  syms ^^
+    {
+      s => ConcreteKConfig(CMenu(Prompt(rootId,Yes), s))
+    }
 
   //TODO temporary hack to get around ignoring if conditions
-  private lazy val syms : Parser[List[CSymbol]] =
+  private lazy val syms: Parser[List[CSymbol]] =
     rep(menu ^^ { List(_) } | config ^^ { List(_) } | choice ^^ { List(_) } | ifSym) ^^ { _.flatten[CSymbol] }
 
   //TODO we ignore if conditions for now

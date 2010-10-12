@@ -28,9 +28,7 @@ import gsd.linux._
  *
  * @author Steven She (shshe@gsd.uwaterloo.ca)
  */
-trait FeatureStatistics extends Rewriter with TypeFilterList {
-
-  val k : ConcreteKConfig
+class FeatureStatistics(val k: ConcreteKConfig) extends Rewriter with TypeFilterList {
 
   lazy val configs = collectl {
     case c: CConfig if !c.isMenuConfig => c
@@ -48,15 +46,17 @@ trait FeatureStatistics extends Rewriter with TypeFilterList {
     case c: CChoice => c
   }(k)
 
-  lazy val allConfigs = configs ++ menuconfigs
+  lazy val allConfigs = collectl {
+    case c: CConfig => c
+  }(k)
 
   lazy val features = configs ++ menuconfigs ++ menus ++ choices
 
   lazy val boolConfigs   = allConfigs.filter { _.ktype == KBoolType }
   lazy val triConfigs    = allConfigs.filter { _.ktype == KTriType }
   lazy val stringConfigs = allConfigs.filter { _.ktype == KStringType }
-  lazy val intConfig     = allConfigs.filter { _.ktype == KIntType }
-  lazy val hexConfig     = allConfigs.filter { _.ktype == KHexType }
+  lazy val intConfigs     = allConfigs.filter { _.ktype == KIntType }
+  lazy val hexConfigs     = allConfigs.filter { _.ktype == KHexType }
 
   lazy val promptConfigs    = allConfigs.filter { _.prompt.isDefined }
   lazy val nonPromptConfigs = allConfigs -- promptConfigs

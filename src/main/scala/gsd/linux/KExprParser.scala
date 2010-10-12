@@ -30,8 +30,6 @@ import util.parsing.combinator.{ImplicitConversions, JavaTokenParsers}
  */
 trait KExprParser extends JavaTokenParsers with ImplicitConversions {
 
-  private type E = KExpr
-
   val identifier = """[-_0-9a-zA-Z]+""".r ^^ Id
 
   val lit = ("\"[^\"]*\"").r ^^
@@ -60,13 +58,13 @@ trait KExprParser extends JavaTokenParsers with ImplicitConversions {
           }
       }
 
-  lazy val expr : Parser[E] =
+  lazy val expr : Parser[KExpr] =
     (andExpr ~ ("||" ~> expr)) ^^ Or | andExpr
 
-  lazy val andExpr : Parser[E] =
+  lazy val andExpr : Parser[KExpr] =
     (eqExpr ~ ("&&" ~> andExpr)) ^^ And | eqExpr
 
-  lazy val eqExpr : Parser[E] =
+  lazy val eqExpr : Parser[KExpr] =
     (idOrValue ~ ("="|"!=") ~ idOrValue) ^^
        {
          case l~"="~r  => Eq(l,r)
@@ -74,7 +72,7 @@ trait KExprParser extends JavaTokenParsers with ImplicitConversions {
        } |
     unaryExpr
 
-  lazy val unaryExpr : Parser[E] =
+  lazy val unaryExpr : Parser[KExpr] =
     "!" ~> primaryExpr ^^ Not | primaryExpr
 
   lazy val primaryExpr = "(" ~> expr <~ ")" | idOrValue
