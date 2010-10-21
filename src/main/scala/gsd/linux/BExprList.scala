@@ -31,12 +31,12 @@ trait BExprList {
 
   class BExprList(lst : List[BExpr]) {
     def mkDisjunction = lst match {
-      case Nil => False
-      case _ => lst.reduceLeft(_ || _)
+      case Nil => BFalse
+      case _ => lst.reduceLeft(_ | _)
     }
     def mkConjunction = lst match {
-      case Nil => True
-      case _ => lst.reduceLeft(_ && _)
+      case Nil => BTrue
+      case _ => lst.reduceLeft(_ & _)
     }
   }
 

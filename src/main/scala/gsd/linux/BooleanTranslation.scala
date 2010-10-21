@@ -44,10 +44,10 @@ trait BooleanTranslation extends KExprList with BExprList with ExprRewriter {
    */
   def toBExpr(in: KExpr) = {
     def translate(e: KExpr): BExpr = e match {
-      case No => False
-      case Mod | Yes => True
+      case No => BFalse
+      case Mod | Yes => BTrue
 
-      case Literal(_) | KHex(_) | KInt(_) => False
+      case Literal(_) | KHex(_) | KInt(_) => BFalse
 
       case Eq(Id(n), Yes) => BId(n)
       case Eq(Id(n), Mod) => BId(n)
@@ -58,8 +58,8 @@ trait BooleanTranslation extends KExprList with BExprList with ExprRewriter {
       case Eq(Id(n), KInt(_)) => BId(n)
       case Eq(Id(x), Id(y)) => BIff(BId(x), BId(y))
 
-      case NEq(Id(n), Yes) => True //TODO Check this
-      case NEq(Id(n), Mod) => True //TODO Check this
+      case NEq(Id(n), Yes) => BTrue //TODO Check this
+      case NEq(Id(n), Mod) => BTrue //TODO Check this
       case NEq(x, y) => BNot(translate(Eq(x, y)))
 
       case And(x, y) => BAnd(translate(x), translate(y))
@@ -95,7 +95,7 @@ trait BooleanTranslation extends KExprList with BExprList with ExprRewriter {
 
         val factored = contains.map { _ - fact }.map { _.mkConjunction }
         val remaining = disjs -- contains.map { _.mkConjunction }
-        (fact && _fact(factored).mkDisjunction) :: remaining
+        (fact & _fact(factored).mkDisjunction) :: remaining
       }
     }
     _fact(in).mkDisjunction
@@ -121,7 +121,7 @@ trait BooleanTranslation extends KExprList with BExprList with ExprRewriter {
     }
 
     def negateDefaults(prevs: List[Default]) =
-      ((True: BExpr) /: prevs) {(x, y) => x && !toBExpr(y.cond)}
+      ((BTrue: BExpr) /: prevs) {(x, y) => x & !toBExpr(y.cond)}
 
     /**
      * Chunk defaults and reverse such that the last default chunk is first.
@@ -140,12 +140,12 @@ trait BooleanTranslation extends KExprList with BExprList with ExprRewriter {
           doChunks(rest) {
 
             //Remove defaults with value 'No' or Literal("")
-            lst.remove { case Default(iv, _) => iv == No || iv == Literal("") }
+            lst.remove { case Default(iv, _) => iv == No | iv == Literal("") }
                     .map {
-              case Default(Yes, c) => negatedPrev && toBExpr(c)
-              case Default(Mod, c) => negatedPrev && toBExpr(c)
-              case Default(v: Value, c)   => negatedPrev && toBExpr(c)
-              case Default(iv, c) => negatedPrev && toBExpr(c && iv)
+              case Default(Yes, c) => negatedPrev & toBExpr(c)
+              case Default(Mod, c) => negatedPrev & toBExpr(c)
+              case Default(v: Value, c)   => negatedPrev & toBExpr(c)
+              case Default(iv, c) => negatedPrev & toBExpr(c && iv)
             } ++ acc
           }
       }
@@ -208,11 +208,11 @@ trait BooleanTranslation extends KExprList with BExprList with ExprRewriter {
 
         //Heuristic for estimating size of resulting CNF translation
         if (numOfIds < 40 && asCons.size < 5)
-          (proE || (asAnte.mkDisjunction implies BId(id)) &&
+          (proE | (asAnte.mkDisjunction implies BId(id)) &
                   (BId(id) implies asCons.mkDisjunction)) :: Nil
         else {
           val equivs = asCons.map { e => cache(e) iff factor(e.splitDisjunctions) }
-          (proE || (replaceWithVars(asAnte).mkDisjunction implies BId(id)) &&
+          (proE | (replaceWithVars(asAnte).mkDisjunction implies BId(id)) &
                   (BId(id) implies replaceWithVars(asCons).mkDisjunction)) :: equivs
         }
     }
@@ -228,7 +228,7 @@ trait BooleanTranslation extends KExprList with BExprList with ExprRewriter {
   def mkChoice(k: AbstractKConfig): List[BExpr] = k.choices.flatMap {
     case AChoice(vis, isBool, isMand, memIds) =>
       val xors = Combinations.choose(2, memIds).map {
-        case fst :: snd :: Nil => !BId(fst) || !BId(snd)
+        case fst :: snd :: Nil => !BId(fst) | !BId(snd)
         case _ => error("This should never happen")
       }
 

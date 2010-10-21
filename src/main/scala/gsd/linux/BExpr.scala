@@ -20,47 +20,97 @@
 
 package gsd.linux
 
-/**
- * A set of classes for representing Boolean expressions.
- *
- * @author Steven She (shshe@gsd.uwaterloo.ca)
- */
-sealed abstract class BExpr {
-  def ||(other: BExpr) = BOr(this, other)
-  def &&(other: BExpr) = BAnd(this, other)
-  def implies(other: BExpr) = BImplies(this, other)
-  def iff(other: BExpr) = BIff(this, other)
-  def unary_! = BNot(this)
+trait Expr
 
-  def splitConjunctions : List[BExpr] = this match {
+object BExpr {
+  implicit def toB2ExprList(lst: List[BExpr]) = new B2ExprList(lst)
+
+  class B2ExprList(lst: List[BExpr]) {
+    def ||(): BExpr = ((BFalse: BExpr) /: lst){ _ | _ }
+  }
+}
+sealed abstract class BExpr extends Expr {
+  def |(o: BExpr): BExpr = BOr(this, o)
+  def &(o: BExpr): BExpr = BAnd(this, o)
+  def iff(o: BExpr): BExpr = BIff(this, o)
+  def implies(o: BExpr): BExpr = BImplies(this, o)
+
+  def unary_!(): BExpr = BNot(this)
+
+  def splitConjunctions(): List[BExpr] = this match {
     case BAnd(x,y) => x.splitConjunctions ::: y.splitConjunctions
     case e => List(e)
   }
-  def splitDisjunctions : List[BExpr] = this match {
+  def splitDisjunctions(): List[BExpr] = this match {
     case BOr(x,y) => x.splitDisjunctions ::: y.splitDisjunctions
     case e => List(e)
   }
+
+  lazy val simplify: BExpr = this
 }
 
-sealed abstract class BBinaryOp(left: BExpr, right: BExpr, op: String) extends BExpr {
-  override def toString = "(" + left + " " + op + " " + right + ")"
-}
-
-case class BAnd(l: BExpr, r: BExpr) extends BBinaryOp(l,r,"&&")
-case class BOr(l: BExpr, r: BExpr) extends BBinaryOp(l,r,"||")
-case class BIff(l: BExpr, r: BExpr) extends BBinaryOp(l,r,"<->")
-case class BImplies(l: BExpr, r: BExpr) extends BBinaryOp(l,r,"->")
-
-case object True extends BExpr {
-  override def toString = "1"
-}
-case object False extends BExpr {
-  override def toString = "0"
+trait BinarySimplify extends BExpr {
+  val l, r: BExpr
+  def simp(f: (BExpr, BExpr) => BExpr) = f(l.simplify, r.simplify)
 }
 
 case class BNot(e: BExpr) extends BExpr {
+
   override def toString = "!" + e
+
+  override lazy val simplify = e match {
+    case BNot(f) => f.simplify
+    case BTrue => BFalse
+    case BFalse => BTrue
+    case _ => BNot(e.simplify)
+  }
 }
-case class BId(value: String) extends BExpr {
-  override def toString = value
+
+case class BAnd(l: BExpr, r: BExpr) extends BExpr with BinarySimplify {
+
+  override def toString = "(" + l + " & " + r + ")"
+
+  override lazy val simplify =
+    if (l == BFalse || r == BFalse) BFalse
+    else simp(BAnd)
 }
+
+case class BOr(l: BExpr, r: BExpr) extends BExpr with BinarySimplify {
+
+  override def toString = "(" + l + " | " + r + ")"
+
+  override lazy val simplify =
+    if (l == BTrue || r == BTrue) BTrue
+    else simp(BOr)
+
+}
+
+case class BIff(l: BExpr, r: BExpr) extends BExpr with BinarySimplify {
+  override def toString = "(" + l + " <=> " + r + ")"
+
+  override lazy val simplify = (l.simplify, r.simplify) match {
+    case (BTrue, _) => r.simplify
+    case (_, BTrue) => l.simplify
+    case (BFalse,_) => ((!r).simplify)
+    case (_,BFalse) => ((!l).simplify)
+    case _ => simp(BIff)
+  }
+}
+
+case class BImplies(l: BExpr, r: BExpr) extends BExpr with BinarySimplify {
+  override def toString = "(" + l + " -> " + r + ")"
+  override lazy val simplify = simp(BImplies)
+}
+
+case class BId(v: String) extends BExpr {
+  override def toString = v
+}
+case object BTrue extends BExpr {
+  override def &(o: BExpr) = o
+  override def toString = "1"
+}
+case object BFalse extends BExpr {
+  override def |(o: BExpr) = o
+  override def toString = "0"
+}
+
