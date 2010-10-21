@@ -58,11 +58,15 @@ case class BNot(e: BExpr) extends BExpr {
 
   override def toString = "!" + e
 
-  override lazy val simplify = e match {
+  override lazy val simplify = e.simplify match {
+    //De Morgans
+    case BAnd(x,y) => (!x).simplify | (!y).simplify
+    case BOr(x,y)  => (!x).simplify & (!y).simplify
+
     case BNot(f) => f.simplify
     case BTrue => BFalse
     case BFalse => BTrue
-    case _ => BNot(e.simplify)
+    case _ => !e
   }
 }
 
@@ -70,9 +74,13 @@ case class BAnd(l: BExpr, r: BExpr) extends BExpr with BinarySimplify {
 
   override def toString = "(" + l + " & " + r + ")"
 
-  override lazy val simplify =
-    if (l == BFalse || r == BFalse) BFalse
-    else simp(BAnd)
+  override lazy val simplify = (l.simplify, r.simplify) match {
+    case (BTrue, y) => y
+    case (x, BTrue) => x
+    case (BFalse, _) | (_, BFalse) => BFalse
+    case (x, y) if x == y => x
+    case _ => simp(BAnd)
+  }
 }
 
 case class BOr(l: BExpr, r: BExpr) extends BExpr with BinarySimplify {
@@ -89,17 +97,21 @@ case class BIff(l: BExpr, r: BExpr) extends BExpr with BinarySimplify {
   override def toString = "(" + l + " <=> " + r + ")"
 
   override lazy val simplify = (l.simplify, r.simplify) match {
-    case (BTrue, _) => r.simplify
-    case (_, BTrue) => l.simplify
-    case (BFalse,_) => ((!r).simplify)
-    case (_,BFalse) => ((!l).simplify)
+    case (BTrue, y) => y
+    case (x, BTrue) => x
+    case (BFalse,y) => ((!y).simplify)
+    case (x,BFalse) => ((!x).simplify)
     case _ => simp(BIff)
   }
 }
 
 case class BImplies(l: BExpr, r: BExpr) extends BExpr with BinarySimplify {
   override def toString = "(" + l + " -> " + r + ")"
-  override lazy val simplify = simp(BImplies)
+  override lazy val simplify = (l.simplify, r.simplify) match {
+    case (BFalse, _) => BTrue
+    case (BTrue, y) => y
+    case _ => simp(BImplies)
+  }
 }
 
 case class BId(v: String) extends BExpr {
