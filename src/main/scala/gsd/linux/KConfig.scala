@@ -59,12 +59,8 @@ case class ConcreteKConfig(root: CMenu) {
 }
 
 case class AbstractKConfig(configs: List[AConfig], choices: List[AChoice]) {
-  /**
-   * Maps an identifier to its abstract config
-   */
-  lazy val idMap: Map[String, AConfig] = Map() ++ configs.map {
-    case c: AConfig => c.id -> c
-  }
+  lazy val idMap: Map[String, Int] =
+    Map() ++ (configs.map{ _.id }.zipWithIndex map { case (id, i) => (id, i+1) })
 }
 
 object AbstractKConfig {

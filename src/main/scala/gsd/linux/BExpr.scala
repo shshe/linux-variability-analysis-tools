@@ -20,12 +20,14 @@
 
 package gsd.linux
 
+import kiama.rewriting.Rewriter
+
 trait Expr
 
 object BExpr {
-  implicit def toB2ExprList(lst: List[BExpr]) = new B2ExprList(lst)
+  implicit def toBExprList(lst: List[BExpr]) = new BExprList(lst)
 
-  class B2ExprList(lst: List[BExpr]) {
+  class BExprList(lst: List[BExpr]) {
     def ||(): BExpr = ((BFalse: BExpr) /: lst){ _ | _ }
   }
 }
@@ -45,6 +47,11 @@ sealed abstract class BExpr extends Expr {
     case BOr(x,y) => x.splitDisjunctions ::: y.splitDisjunctions
     case e => List(e)
   }
+
+  def identifiers: Set[String] =
+    (new Object with Rewriter).collects {
+      case BId(v) => v
+    }(BExpr.this)
 
   lazy val simplify: BExpr = this
 }
