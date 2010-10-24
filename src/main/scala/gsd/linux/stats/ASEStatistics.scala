@@ -1,5 +1,4 @@
 package gsd.linux.stats
-
 import gsd.linux._
 
 class ASEStatistics(ck: ConcreteKConfig) extends FeatureStatistics(ck) {
@@ -35,6 +34,10 @@ object ASEStatisticsMain {
     println("XOR:          " + stats.xorGroups.size)
     println("OR:           " + stats.orGroups.size)
     println("MUTEX:        " + stats.mutexGroups.size)
+  }
+
+  def visibilityStats(implicit stats: ASEStatistics) {
+    
   }
 
   def main(args: Array[String]) {
