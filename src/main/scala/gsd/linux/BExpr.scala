@@ -73,7 +73,7 @@ case class BNot(e: BExpr) extends BExpr {
     case BNot(f) => f.simplify
     case BTrue => BFalse
     case BFalse => BTrue
-    case _ => !e
+    case x => !x
   }
 }
 
@@ -94,10 +94,13 @@ case class BOr(l: BExpr, r: BExpr) extends BExpr with BinarySimplify {
 
   override def toString = "(" + l + " | " + r + ")"
 
-  override lazy val simplify =
-    if (l == BTrue || r == BTrue) BTrue
-    else simp(BOr)
-
+  override lazy val simplify = (l.simplify, r.simplify) match {
+    case (BFalse, y) => y
+    case (x, BFalse) => x
+    case (BTrue, _) | (_, BTrue) => BTrue
+    case (x, y) if x == y => x
+    case _ => simp(BOr)
+  }
 }
 
 case class BIff(l: BExpr, r: BExpr) extends BExpr with BinarySimplify {
