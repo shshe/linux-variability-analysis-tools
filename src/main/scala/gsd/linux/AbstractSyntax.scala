@@ -99,18 +99,20 @@ class AbstractSyntaxBuilder(k: ConcreteKConfig) extends AbstractSyntax
    * returns the abstract syntax representation of the KConfig structure
    */
   lazy val toAbstractSyntax : AbstractKConfig = {
+
     val configs = collectl {
-      case CConfig(id,_,t,inherited,p,defs,_,rngs,_,_) =>
+      case CConfig(id,_,t,inh,p,defs,_,rngs,_,_) =>
         val pro = p match {
           case Some(Prompt(_,cond)) => cond
           case None => No
         }
-        AConfig(id,t,inherited,pro,addBaseDefault(t, defs),rev(id),rngs)
+        AConfig(id,t,inh,pro,addBaseDefault(t, defs),rev(id),rngs)
     }(k)
     
     val choices = collectl {
       case c: CChoice => mkAChoice(c)
     }(k)
+    
     AbstractKConfig(configs, choices)
   }
 }

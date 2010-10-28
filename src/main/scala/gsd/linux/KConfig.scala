@@ -53,18 +53,21 @@ case class ConcreteKConfig(root: CMenu) {
     case Id(n) => n
   }(root)
 
-
   def toAbstractKConfig =
     new AbstractSyntaxBuilder(this).toAbstractSyntax
 }
 
 case class AbstractKConfig(configs: List[AConfig], choices: List[AChoice]) {
+  val rw = new Object with Rewriter
 
-  lazy val identifiers: List[String] =
-    configs map { _.id }
+  lazy val identifiers: Set[String] =
+    rw.collects {
+      case c: AConfig => c.id
+      case Id(n) => n
+    }(configs ::: choices) 
 
   lazy val idMap: Map[String, Int] =
-    Map() ++ (identifiers.zipWithIndex map { case (id, i) => (id, i+1) })
+    Map() ++ (identifiers.toList.zipWithIndex map { case (id, i) => (id, i+1) })
 }
 
 object AbstractKConfig {
