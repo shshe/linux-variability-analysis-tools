@@ -120,7 +120,7 @@ case class BImplies(l: BExpr, r: BExpr) extends BExpr with BinarySimplify {
   override lazy val simplify = (l.simplify, r.simplify) match {
     case (BFalse, _) => BTrue
     case (BTrue, y) => y
-    case _ => simp(BImplies)
+    case _ => (!l).simplify | r
   }
 }
 
