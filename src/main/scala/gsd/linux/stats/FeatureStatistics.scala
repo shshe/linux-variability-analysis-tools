@@ -59,7 +59,7 @@ class FeatureStatistics(val k: ConcreteKConfig) extends TypeFilterList {
   lazy val hexConfigs     = allConfigs.filter { _.ktype == KHexType }
 
   lazy val promptConfigs    = allConfigs.filter { _.prompt.isDefined }
-  lazy val nonPromptConfigs = allConfigs -- promptConfigs
+  lazy val nonPromptConfigs = allConfigs filterNot (promptConfigs contains)
 
   lazy val mandChoice = choices.filter { _.isMand }
   lazy val optChoice = choices.filter { !_.isMand }

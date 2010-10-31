@@ -39,20 +39,20 @@ trait KConfigParser extends KExprParser with ImplicitConversions with TypeFilter
         s => s.substring(1, s.length - 1)
       }
 
-  private lazy val kType: Parser[KType] =
+  private lazy val kType: PackratParser[KType] =
     "boolean"  ^^^ KBoolType |
     "tristate" ^^^ KTriType |
     "integer"  ^^^ KIntType |
     "hex"      ^^^ KHexType |
     "string"   ^^^ KStringType
 
-  private lazy val exExpr: Parser[KExpr] =
+  private lazy val exExpr: PackratParser[KExpr] =
     "[" ~> opt(expr) <~ "]" ^^ { _.getOrElse(Yes) }
 
-  private lazy val ifExpr: Parser[KExpr] =
+  private lazy val ifExpr: PackratParser[KExpr] =
     "if" ~> exExpr
 
-  private lazy val idString: Parser[String] =
+  private lazy val idString: PackratParser[String] =
     identifier ^^ { case Id(s) => s }
 
   private lazy val env =
@@ -73,31 +73,38 @@ trait KConfigParser extends KExprParser with ImplicitConversions with TypeFilter
   private lazy val inherited =
     "inherited" ~> exExpr
 
-  private lazy val depends: Parser[DependsOn] =
+  private lazy val depends: PackratParser[DependsOn] =
     "depends" ~> "on" ~> exExpr ^^ DependsOn
 
-  private lazy val property = prompt | depends | default | range | select | env
+  private lazy val property =
+    prompt | depends | default | range | select | env
 
-  private lazy val kconfig: Parser[ConcreteKConfig] =
-  syms ^^
+  private lazy val kconfig: PackratParser[ConcreteKConfig] =
+  syms ^^ { c => ConcreteKConfig(CMenu(Prompt(rootId,Yes), c)) }
+
+  //FIXME temporary hack to get around ignoring if statements
+  private lazy val syms: PackratParser[List[CSymbol]] =
+    rep {
+      menu ^^ { List(_) } |
+      config ^^ { List(_) } |
+      choice ^^ { List(_) } |
+      ifSym
+    } ^^ { _.flatten[CSymbol] }
+
+
+  //FIXME ignoring if statements
+  private lazy val ifSym =
+  "if" ~> exExpr ~ ("{" ~> syms <~ "}") ^^
     {
-      s => ConcreteKConfig(CMenu(Prompt(rootId,Yes), s))
+       case e~children => children
     }
 
-  //TODO temporary hack to get around ignoring if conditions
-  private lazy val syms: Parser[List[CSymbol]] =
-    rep(menu ^^ { List(_) } | config ^^ { List(_) } | choice ^^ { List(_) } | ifSym) ^^ { _.flatten[CSymbol] }
-
-  //TODO we ignore if conditions for now
-  private lazy val ifSym = "if" ~> exExpr ~ ("{" ~> syms <~ "}") ^^
-        {
-          case e~children => children
-        }
-
-
-  private lazy val menu = "menu" ~> (strLiteral ~
-          ("{" ~> opt(depends) ^^ { _.getOrElse(DependsOn(Yes)).cond }) ^^ Prompt) ~
-      syms <~ "}" ^^ CMenu
+  private lazy val menu =
+    "menu" ~> {
+      strLiteral ~ {
+        "{" ~> opt(depends) ^^ { d => ( d getOrElse DependsOn(Yes) ).cond }
+      } ^^ Prompt
+    } ~ syms <~ "}" ^^ CMenu
 
   private lazy val choice =
     "choice" ~> (kType ^^ { _ == KBoolType }) ~
@@ -110,18 +117,23 @@ trait KConfigParser extends KExprParser with ImplicitConversions with TypeFilter
         }
 
   private lazy val config =
-  ("config" ^^^ false | "menuconfig" ^^^ true) ~ identifier ~
-          kType ~ opt("{" ~> rep(property) ~ opt(inherited) ~ syms <~ "}") ^^
-    {
-      case isMenuConfig~Id(n)~t~Some(props~inh~syms) =>
-        mkConfig(n, isMenuConfig, t, props.typeFilter[Property], inh.getOrElse(Yes), props.typeFilter[DependsOn], syms)
-      case isMenuConfig~Id(n)~t~None =>
-        mkConfig(n, isMenuConfig, t, Nil, Yes, Nil, Nil)
-    }
+    ("config" ^^^ false | "menuconfig" ^^^ true) ~ identifier ~
+            kType ~ opt("{" ~> rep(property) ~ opt(inherited) ~ syms <~ "}") ^^
+      {
 
+        case isMenuConfig~Id(n)~t~Some(props~inh~syms) =>
+          mkConfig(n, isMenuConfig, t, props.typeFilter[Property],
+                   inh.getOrElse(Yes), props.typeFilter[DependsOn], syms)
+
+        case isMenuConfig~Id(n)~t~None =>
+          mkConfig(n, isMenuConfig, t, Nil, Yes, Nil, Nil)
+        
+      }
 
   def parseKConfig(stream: Reader[Char]) = succ(parseAll(kconfig, stream))
+
   def parseKConfig(str: String) = succ(parseAll(kconfig, str))
+
   def parseKConfigFile(file: String) = succ(parseAll(kconfig, new PagedSeqReader(PagedSeq fromFile file)))
 
   /**
@@ -129,7 +141,7 @@ trait KConfigParser extends KExprParser with ImplicitConversions with TypeFilter
    */
   def mkConfig(id: String, isMenuConfig: Boolean, t: KType, props: List[Property],
                inherited: KExpr, depends: List[DependsOn], cs: List[CSymbol]) = {
-    val prompt = props.typeFilter[Prompt].firstOption
+    val prompt = props.typeFilter[Prompt].headOption
     val defs = props.typeFilter[Default]
     val sels = props.typeFilter[Select]
     val ranges = props.typeFilter[Range]

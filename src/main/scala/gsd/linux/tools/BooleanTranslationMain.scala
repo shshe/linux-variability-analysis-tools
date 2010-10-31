@@ -37,7 +37,7 @@ object BooleanTranslationMain extends KConfigParser
     val out = if (args.size > 1) new PrintStream(args(1))
                  else System.out
 
-    val extract = parseKConfigFile(args first)
+    val extract = parseKConfigFile(args head)
 
     //First output identifiers
     for (id <- extract.identifiers) out.println("@ " + id)

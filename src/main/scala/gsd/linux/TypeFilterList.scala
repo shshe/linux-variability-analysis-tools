@@ -32,7 +32,7 @@ trait TypeFilterList {
       lst.filter{x:A => m.erasure.isInstance(x)}.asInstanceOf[List[T]]
 
     def sortByType =
-      lst.sort{(x,y) => x.getClass.getName < y.getClass.getName }
+      lst.sortWith{(x,y) => x.getClass.getName < y.getClass.getName }
   }
 
   implicit def toSuperList[A <: AnyRef](lst: List[A]) =
