@@ -35,7 +35,7 @@ object ChoiceMain {
       System.exit(1)
     }
 
-    val extract = KConfigParser.parseKConfigFile(args first)
+    val extract = KConfigParser.parseKConfigFile(args head)
     val out = if (args.size > 1) new PrintStream(args(1)) else System.out
 
     val mutex = extract.choices filter {
@@ -49,7 +49,7 @@ object ChoiceMain {
     val xorC  = (extract.choices filter {
       case CChoice(_,true,true,_,_) => true
       case _ => false
-    }) -- xor
+    }) filterNot (xor contains)
     val or    = extract.choices filter {
       case CChoice(_,false,true,_,_) => true
       case _ => false

@@ -22,6 +22,10 @@ package gsd.linux
 
 object MapUtil {
 
+  implicit def toRichMap[T,U](map: Map[T,U]) = new {
+    def invert = invertMap(map)
+  }
+
   def invertMap[T,U](map: Map[T,U]): Map[U, Set[T]] = {
     import collection.mutable.HashMap
     val result = new HashMap[U, Set[T]]

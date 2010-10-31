@@ -41,7 +41,7 @@ object HierarchyMain {
       System.exit(1)
     }
 
-    val k = parseKConfigFile(args first)
+    val k = parseKConfigFile(args head)
     val out = if (args.size > 1) new PrintStream(args(1))
                  else System.out
 

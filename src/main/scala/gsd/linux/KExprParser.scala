@@ -20,7 +20,7 @@
 package gsd.linux
 
 import util.parsing.input.Reader
-import util.parsing.combinator.{ImplicitConversions, JavaTokenParsers}
+import util.parsing.combinator.{PackratParsers, ImplicitConversions, JavaTokenParsers}
 
 /**
  * A parser for reading Kconfig expressions. It is currently only used by
@@ -28,7 +28,7 @@ import util.parsing.combinator.{ImplicitConversions, JavaTokenParsers}
  *
  * @author Steven She (shshe@gsd.uwaterloo.ca)
  */
-trait KExprParser extends JavaTokenParsers with ImplicitConversions {
+trait KExprParser extends JavaTokenParsers with PackratParsers with ImplicitConversions {
 
   val identifier = """[-_0-9a-zA-Z]+""".r ^^ Id
 
@@ -43,7 +43,7 @@ trait KExprParser extends JavaTokenParsers with ImplicitConversions {
 
   val hex = """0x[0-9a-fA-F]+""".r ^^ KHex
 
-  val idOrValue : Parser[IdOrValue] =
+  val idOrValue : PackratParser[IdOrValue] =
     "<choice>" ^^^ Yes | lit | hex | "[-_0-9a-zA-Z]+".r ^^
       {
         case "y" | "Y" => Yes
@@ -58,13 +58,13 @@ trait KExprParser extends JavaTokenParsers with ImplicitConversions {
           }
       }
 
-  lazy val expr : Parser[KExpr] =
+  lazy val expr : PackratParser[KExpr] =
     (andExpr ~ ("||" ~> expr)) ^^ Or | andExpr
 
-  lazy val andExpr : Parser[KExpr] =
+  lazy val andExpr : PackratParser[KExpr] =
     (eqExpr ~ ("&&" ~> andExpr)) ^^ And | eqExpr
 
-  lazy val eqExpr : Parser[KExpr] =
+  lazy val eqExpr : PackratParser[KExpr] =
     (idOrValue ~ ("="|"!=") ~ idOrValue) ^^
        {
          case l~"="~r  => Eq(l,r)
@@ -72,7 +72,7 @@ trait KExprParser extends JavaTokenParsers with ImplicitConversions {
        } |
     unaryExpr
 
-  lazy val unaryExpr : Parser[KExpr] =
+  lazy val unaryExpr : PackratParser[KExpr] =
     "!" ~> primaryExpr ^^ Not | primaryExpr
 
   lazy val primaryExpr = "(" ~> expr <~ ")" | idOrValue

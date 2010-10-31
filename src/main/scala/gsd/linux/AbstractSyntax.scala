@@ -81,13 +81,13 @@ class AbstractSyntaxBuilder(k: ConcreteKConfig) extends AbstractSyntax
       query {
         case CConfig(id,_,_,_,_,_,sels,_,_,_) =>
           sels.map { case Select(n,e) => (n, Id(id) && e) }.foreach {
-            case (k,v) => mutMap.add(k,v)
+            case (k,v) => mutMap addBinding (k,v)
           }
       }
     }(k)
 
-    (Map() withDefaultValue (Set() : Set[KExpr])) ++
-            mutMap.elements.map { case (k,v) => (k, Set() ++ v) }
+    (Map() withDefaultValue (Set(): Set[KExpr])) ++
+            (mutMap.iterator map { case (k,v) => (k, Set() ++ v) })
   }
 
   /**
