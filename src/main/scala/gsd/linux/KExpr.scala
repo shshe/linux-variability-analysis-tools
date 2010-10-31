@@ -19,8 +19,6 @@
  */
 package gsd.linux
 
-import kiama.rewriting.Rewriter
-
 /**
  * A set of classes for representing expressions in the Kconfig language.
  * Supports its tristate logic, equality and inequalities in expressions.
@@ -43,8 +41,6 @@ sealed abstract class KExpr(children : List[KExpr]) {
   }
 
 }
-
-object KExprRewriter extends Rewriter {}
 
 sealed abstract class BinaryOp(l : KExpr, r : KExpr, opStr : String) extends KExpr(List(l,r)) {
   override def toString = "(" + l + " " + opStr + " " + r + ")"

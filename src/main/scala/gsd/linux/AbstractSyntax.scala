@@ -19,13 +19,13 @@
  */
 package gsd.linux
 
-import kiama.rewriting.Rewriter
+import org.kiama.rewriting.Rewriter._
 import collection.mutable.{MultiMap, HashMap}
 
 /**
  * @author Steven She (shshe@gsd.uwaterloo.ca)
  */
-trait AbstractSyntax extends Rewriter {
+trait AbstractSyntax {
   implicit def toAbstractSyntax(k: ConcreteKConfig) =
     new AbstractSyntaxBuilder(k)
   
@@ -95,9 +95,6 @@ class AbstractSyntaxBuilder(k: ConcreteKConfig) extends AbstractSyntax
    */
   def rev(n: String) = revMap(n).toList
 
-  /**
-   * returns the abstract syntax representation of the KConfig structure
-   */
   lazy val toAbstractSyntax : AbstractKConfig = {
 
     val configs = collectl {

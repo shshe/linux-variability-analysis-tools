@@ -19,28 +19,31 @@
  */
 package gsd.linux
 
-import kiama.rewriting.Rewriter
+import org.kiama.rewriting.Rewriter._
 
 case class ConcreteKConfig(root: CMenu) {
-  val rw = new Object with Rewriter
 
-  lazy val plainConfigs: List[CConfig] = rw.collectl {
-    case c: CConfig if !c.isMenuConfig => c
-  }(root)
+  lazy val plainConfigs: List[CConfig] =
+    collectl {
+      case c: CConfig if !c.isMenuConfig => c
+    }(root)
 
-  lazy val menuConfigs: List[CConfig] = rw.collectl {
-    case c: CConfig if  c.isMenuConfig => c
-  }(root)
+  lazy val menuConfigs: List[CConfig] =
+    collectl {
+      case c: CConfig if  c.isMenuConfig => c
+    }(root)
 
   lazy val allConfigs: List[CConfig] = plainConfigs ++ menuConfigs
 
-  lazy val choices: List[CChoice] = rw.collectl {
-    case c: CChoice => c
-  }(root)
+  lazy val choices: List[CChoice] =
+    collectl {
+      case c: CChoice => c
+    }(root)
 
-  lazy val menus: List[CMenu] = rw.collectl {
-    case m: CMenu => m
-  }(root)
+  lazy val menus: List[CMenu] =
+    collectl {
+      case m: CMenu => m
+    }(root)
 
   lazy val features: List[CSymbol] =
     allConfigs ++ menus ++ choices
@@ -48,7 +51,8 @@ case class ConcreteKConfig(root: CMenu) {
   /**
    * Set of all identifiers and identifier references in the Kconfig model.
    */
-  lazy val identifiers = rw.collects {
+  lazy val identifiers: Set[String] =
+  collects {
     case c: CConfig => c.id
     case Id(n) => n
   }(root)
@@ -58,10 +62,9 @@ case class ConcreteKConfig(root: CMenu) {
 }
 
 case class AbstractKConfig(configs: List[AConfig], choices: List[AChoice]) {
-  val rw = new Object with Rewriter
 
   lazy val identifiers: Set[String] =
-    rw.collects {
+    collects {
       case c: AConfig => c.id
       case Id(n) => n
     }(configs ::: choices) 

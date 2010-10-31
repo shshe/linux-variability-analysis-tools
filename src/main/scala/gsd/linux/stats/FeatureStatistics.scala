@@ -20,7 +20,7 @@
 
 package gsd.linux.stats
 
-import kiama.rewriting.Rewriter
+import org.kiama.rewriting.Rewriter._
 import gsd.linux._
 
 /**
@@ -28,7 +28,7 @@ import gsd.linux._
  *
  * @author Steven She (shshe@gsd.uwaterloo.ca)
  */
-class FeatureStatistics(val k: ConcreteKConfig) extends Rewriter with TypeFilterList {
+class FeatureStatistics(val k: ConcreteKConfig) extends TypeFilterList {
 
   lazy val configs = collectl {
     case c: CConfig if !c.isMenuConfig => c

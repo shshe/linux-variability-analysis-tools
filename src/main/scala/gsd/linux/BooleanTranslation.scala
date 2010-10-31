@@ -20,7 +20,7 @@
 
 package gsd.linux
 
-import kiama.rewriting.Rewriter
+import org.kiama.rewriting.Rewriter._
 
 /**
  * Builds the Boolean formula for an abstract Kconfig model.
@@ -158,7 +158,7 @@ trait BooleanTranslation extends KExprList with BExprList with ExprRewriter {
    * antecedent, would be too constraining.
    */
   def isTooConstraining(e: KExpr): Boolean =
-    KExprRewriter.count { case _ : Eq | _ : NEq => 1}(e) > 0
+    count { case _ : Eq | _ : NEq => 1}(e) > 0
 
   def isTooConstraining(d: Default): Boolean =
     isTooConstraining(d.iv) || isTooConstraining(d.cond)
@@ -248,7 +248,7 @@ trait BooleanTranslation extends KExprList with BExprList with ExprRewriter {
   }
 }
 
-trait ExprRewriter extends Rewriter {
+trait ExprRewriter {
   def identifiers(e: BExpr): Set[String] = collects {
     case BId(n) => n
   }(e)

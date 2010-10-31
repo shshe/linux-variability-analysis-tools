@@ -20,7 +20,6 @@
 
 package gsd.linux
 
-import kiama.rewriting.Rewriter
 
 trait Expr
 
@@ -32,6 +31,8 @@ object BExpr {
   }
 }
 sealed abstract class BExpr extends Expr {
+  import org.kiama.rewriting.Rewriter._
+  
   def |(o: BExpr): BExpr = BOr(this, o)
   def &(o: BExpr): BExpr = BAnd(this, o)
   def iff(o: BExpr): BExpr = BIff(this, o)
@@ -49,7 +50,7 @@ sealed abstract class BExpr extends Expr {
   }
 
   def identifiers: Set[String] =
-    (new Object with Rewriter).collects {
+    collects {
       case BId(v) => v
     }(BExpr.this)
 
