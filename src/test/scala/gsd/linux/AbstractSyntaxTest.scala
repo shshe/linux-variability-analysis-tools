@@ -25,8 +25,11 @@ import org.junit.Test
 import KConfigParser._
 import KExprList._
 
-class AbstractSyntaxTest extends AssertionsForJUnit with KConfigBuilder
-    with AbstractSyntax with AbstractSyntaxWriter {
+import AbstractSyntax.toAbstractSyntaxBuilder
+
+class AbstractSyntaxTest extends AssertionsForJUnit
+    with KConfigBuilder
+    with AbstractSyntaxWriter {
 
   implicit def toRichList(lst: List[KExpr]) = new {
     def toSet: Set[KExpr] = Set() ++ lst

@@ -23,12 +23,14 @@ package gsd.linux.stats
 import org.kiama.rewriting.Rewriter._
 import gsd.linux._
 
+import TypeFilterList._
+
 /**
  * A collection of useful statistics on the Concrete Kconfig model.
  *
  * @author Steven She (shshe@gsd.uwaterloo.ca)
  */
-class FeatureStatistics(val k: ConcreteKConfig) extends TypeFilterList {
+class FeatureStatistics(val k: ConcreteKConfig) {
 
   lazy val configs = collectl {
     case c: CConfig if !c.isMenuConfig => c
@@ -58,7 +60,7 @@ class FeatureStatistics(val k: ConcreteKConfig) extends TypeFilterList {
   lazy val intConfigs     = allConfigs.filter { _.ktype == KIntType }
   lazy val hexConfigs     = allConfigs.filter { _.ktype == KHexType }
 
-  lazy val promptConfigs    = allConfigs.filter { _.prompt.isDefined }
+  lazy val promptConfigs    = allConfigs.filter { _.prompt.size > 0 }
   lazy val nonPromptConfigs = allConfigs filterNot (promptConfigs contains)
 
   lazy val mandChoice = choices.filter { _.isMand }

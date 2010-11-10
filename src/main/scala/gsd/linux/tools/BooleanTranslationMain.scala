@@ -27,8 +27,7 @@ import java.io.PrintStream
  *
  * @author Steven She (shshe@gsd.uwaterloo.ca)
  */
-object BooleanTranslationMain extends KConfigParser
-        with AbstractSyntax with BooleanTranslation {
+object BooleanTranslationMain {
 
   def main(args: Array[String]) : Unit = {
     if (args.size == 0)
@@ -37,12 +36,12 @@ object BooleanTranslationMain extends KConfigParser
     val out = if (args.size > 1) new PrintStream(args(1))
                  else System.out
 
-    val extract = parseKConfigFile(args head)
+    val k = KConfigParser.parseKConfigFile(args head)
 
     //First output identifiers
-    for (id <- extract.identifiers) out.println("@ " + id)
+    for (id <- k.identifiers) out.println("@ " + id)
 
-    val btrans = mkBooleanTranslation(extract.toAbstractSyntax)
+    val btrans = BooleanTranslation.mkBooleanTranslation(k.toAbstractKConfig)
     for (id <- btrans.genVars) out.println("$ " + id)
     for (e  <- btrans.exprs)   out.println(e)
 

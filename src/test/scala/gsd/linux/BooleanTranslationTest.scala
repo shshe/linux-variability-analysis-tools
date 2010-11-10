@@ -23,15 +23,14 @@ package gsd.linux
 import org.scalatest.junit.AssertionsForJUnit
 import org.junit.{Ignore, Test}
 
-import KConfigParser._
+import BooleanTranslation._
 
-class BooleanTranslationTest extends AssertionsForJUnit with BooleanTranslation
-    with AbstractSyntax {
+class BooleanTranslationTest extends AssertionsForJUnit {
   
   implicit def toId(s: String) = Id(s)
 
   def b(k: ConcreteKConfig) =
-    mkBooleanTranslation(k.toAbstractSyntax)
+    mkBooleanTranslation(k.toAbstractKConfig)
 
   @Test def rewriteKExpr {
     assert(toBExpr(Eq("A",Literal(""))) == BNot(BId("A")))

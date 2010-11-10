@@ -49,26 +49,31 @@ trait KConfigWriter extends KExprWriter {
 
     def mkChoiceType(isBool: Boolean) = if (isBool) text("boolean") else text("tristate")
     def mkMand(o: Boolean) = if (!o) text("optional") else empty
-    def mkPrompt(p: Option[Prompt]) = p match {
-      case Some(Prompt(txt,cond)) => group("prompt" :/: "\"" + txt + "\"" :/: "[" :: cond.toDocument :: text("]"))
-      case None => empty
+
+    def mkPrompt(p: Prompt) = p match {
+      case Prompt(txt,cond) =>
+        group("prompt" :/: "\"" + txt + "\"" :/: "[" :: cond.toDocument :: text("]"))
     }
+
     def mkInherited(e: KExpr) = group("inherited [" :: e.toDocument :: text("]"))
 
     def toDocument = sym match {
+
       case CConfig(id,isMenu,t,inh,pro,defs,sels,rngs,deps,cs) =>
         group((if (isMenu) "config" else "menuconfig") :/: id :/: t.toDocument :/: text("{")) :/:
-          nest(2, mkPrompt(pro)) :/:
+          nest(2, pro.foldLeft(empty:Document) { (x,y) => x :/: mkPrompt(y) })  :/:
           nest(2, (defs ::: sels ::: rngs).foldRight(empty: Document){_.toDocument :/: _}) :/:
           nest(2, mkInherited(inh)) :/:
           nest(2, mkChildren(cs)) :/: text("}")
+
       case CMenu(Prompt(txt,cond),cs) =>
         group("menu" :/: "\"" + txt + "\"" :/: text("{")) :/:
           nest(2, group("depends on" :/: "[" :: cond.toDocument :: text("]"))) :/:
           nest(2, mkChildren(cs)) :/: text("}")
+      
       case CChoice(pro,isBool,isMand,defs,cs) =>
         group("choice" :/: mkChoiceType(isBool) :/: mkMand(isMand) :/: text("{")) :/:
-          nest(2, mkPrompt(Some(pro))) :/:
+          nest(2, mkPrompt(pro)) :/:
           nest(2, defs.foldRight(empty: Document){_.toDocument :/: _}) :/:
           nest(2, mkChildren(cs)) :/: text("}")
     }

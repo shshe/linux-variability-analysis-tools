@@ -22,11 +22,13 @@ package gsd.linux
 import org.kiama.rewriting.Rewriter._
 import collection.mutable.{MultiMap, HashMap}
 
+import TypeFilterList._
+
 /**
  * @author Steven She (shshe@gsd.uwaterloo.ca)
  */
-trait AbstractSyntax {
-  implicit def toAbstractSyntax(k: ConcreteKConfig) =
+object AbstractSyntax {
+  implicit def toAbstractSyntaxBuilder(k: ConcreteKConfig) =
     new AbstractSyntaxBuilder(k)
   
   /**
@@ -45,71 +47,65 @@ trait AbstractSyntax {
       AChoice(vis, isBool, isMand, cs map { _.id })
   }
 
-
-}
-
-object AbstractSyntax extends AbstractSyntax
-
-/**
- * Creates the abstract syntax representation of a concrete KConfig model.
- *
- * @author Steven She (shshe@gsd.uwaterloo.ca)
- */
-class AbstractSyntaxBuilder(k: ConcreteKConfig) extends AbstractSyntax
-        with TypeFilterList {
-
   /**
-   * Helper function for finding a particular config, probably belongs elsewhere
+   * Creates the abstract syntax representation of a concrete KConfig model.
+   *
+   * @author Steven She (shshe@gsd.uwaterloo.ca)
    */
-  def find(id: String): Option[CConfig] = {
-    var result : Option[CConfig] = None
-    oncetd {
-      rule {
-        case c: CConfig if c.id == id => result = Some(c)
-      }
-    }(k)
-    result
-  }
+  class AbstractSyntaxBuilder(k: ConcreteKConfig) {
 
-  /**
-   * A map from an identifier to its select expressions
-   */
-  lazy val revMap : Map[String, Set[KExpr]] = {
-    val mutMap = new HashMap[String, collection.mutable.Set[KExpr]]
-                        with MultiMap[String, KExpr]
-    everywheretd {
-      query {
-        case CConfig(id,_,_,_,_,_,sels,_,_,_) =>
-          sels.map { case Select(n,e) => (n, Id(id) && e) }.foreach {
-            case (k,v) => mutMap addBinding (k,v)
-          }
-      }
-    }(k)
+    import TypeFilterList._
 
-    (Map() withDefaultValue (Set(): Set[KExpr])) ++
-            (mutMap.iterator map { case (k,v) => (k, Set() ++ v) })
-  }
-
-  /**
-   * Creates the reverse dependency expression for a config 
-   */
-  def rev(n: String) = revMap(n).toList
-
-  lazy val toAbstractSyntax : AbstractKConfig = {
-
-    val configs = collectl {
-      case CConfig(id,_,t,inh,p,defs,_,rngs,_,_) =>
-        val pro = p match {
-          case Some(Prompt(_,cond)) => cond
-          case None => No
+    /**
+     * Helper function for finding a particular config, probably belongs elsewhere
+     */
+    def find(id: String): Option[CConfig] = {
+      var result : Option[CConfig] = None
+      oncetd {
+        rule {
+          case c: CConfig if c.id == id => result = Some(c)
         }
-        AConfig(id,t,inh,pro,addBaseDefault(t, defs),rev(id),rngs)
-    }(k)
-    
-    val choices = collectl {
-      case c: CChoice => mkAChoice(c)
-    }(k)
-    
-    AbstractKConfig(configs, choices)
+      }(k)
+      result
+    }
+
+    /**
+     * A map from an identifier to its select expressions
+     */
+    lazy val revMap : Map[String, Set[KExpr]] = {
+      val mutMap = new HashMap[String, collection.mutable.Set[KExpr]]
+              with MultiMap[String, KExpr]
+      everywheretd {
+        query {
+          case CConfig(id,_,_,_,_,_,sels,_,_,_) =>
+            sels.map { case Select(n,e) => (n, Id(id) && e) }.foreach {
+              case (k,v) => mutMap addBinding (k,v)
+            }
+        }
+      }(k)
+
+      (Map() withDefaultValue (Set(): Set[KExpr])) ++
+              (mutMap.iterator map { case (k,v) => (k, Set() ++ v) })
+    }
+
+    /**
+     * Creates the reverse dependency expression for a config
+     */
+    def rev(n: String) = revMap(n).toList
+
+    lazy val toAbstractSyntax : AbstractKConfig = {
+
+      val configs = collectl {
+        case CConfig(id,_,t,inh,p,defs,_,rngs,_,_) =>
+          val pro = ((No: KExpr) /: p){ _ && _.cond }
+          AConfig(id,t,inh,pro,addBaseDefault(t, defs),rev(id),rngs)
+      }(k)
+
+      val choices = collectl {
+        case c: CChoice => mkAChoice(c)
+      }(k)
+
+      AbstractKConfig(configs, choices)
+    }
   }
 }

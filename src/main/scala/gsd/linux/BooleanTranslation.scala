@@ -33,7 +33,7 @@ import org.kiama.rewriting.Rewriter._
  *
  * @author Steven She (shshe@gsd.uwaterloo.ca)
  */
-trait BooleanTranslation extends KExprList with BExprList with ExprRewriter {
+object BooleanTranslation extends KExprList with BExprList with ExprRewriter {
 
   case class BTrans(exprs: List[BExpr], genVars: List[String])
 
@@ -232,4 +232,3 @@ trait ExprRewriter {
 
 }
 
-object BooleanTranslation extends BooleanTranslation
