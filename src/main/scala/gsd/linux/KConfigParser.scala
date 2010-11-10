@@ -23,12 +23,14 @@ import scala.util.parsing.combinator._
 import util.parsing.input.{PagedSeqReader, Reader}
 import collection.immutable.PagedSeq
 
+import TypeFilterList._
+
 /**
  * A parser for the Kconfig extract file (.exconfig).
  *
  * @author Steven She (shshe@gsd.uwaterloo.ca)
  */
-trait KConfigParser extends KExprParser with ImplicitConversions with TypeFilterList {
+object KConfigParser extends KExprParser with ImplicitConversions {
 
   val rootId = "Linux Kernel Configuration"
 
@@ -111,9 +113,9 @@ trait KConfigParser extends KExprParser with ImplicitConversions with TypeFilter
       (opt("optional") ^^ { !_.isDefined }) ~ ("{" ~> rep(prompt|default|depends)) ~
       rep(config) <~ "}" ^^
         {
-          case isBool~isMand~promptDefsAndDepends~cs =>
-            val p = promptDefsAndDepends.typeFilter[Prompt].head
-            CChoice(p,isBool,isMand,promptDefsAndDepends.typeFilter[Default],cs)
+          case isBool~isMand~props~cs =>
+            val p = props.typeFilter[Prompt].head
+            CChoice(p,isBool,isMand,props.typeFilter[Default],cs)
         }
 
   private lazy val config =
@@ -130,18 +132,21 @@ trait KConfigParser extends KExprParser with ImplicitConversions with TypeFilter
         
       }
 
-  def parseKConfig(stream: Reader[Char]) = succ(parseAll(kconfig, stream))
+  def parseKConfig(stream: Reader[Char]): ConcreteKConfig =
+    succ(parseAll(kconfig, stream))
 
-  def parseKConfig(str: String) = succ(parseAll(kconfig, str))
+  def parseKConfig(str: String): ConcreteKConfig =
+    succ(parseAll(kconfig, str))
 
-  def parseKConfigFile(file: String) = succ(parseAll(kconfig, new PagedSeqReader(PagedSeq fromFile file)))
+  def parseKConfigFile(file: String): ConcreteKConfig =
+    succ(parseAll(kconfig, new PagedSeqReader(PagedSeq fromFile file)))
 
   /**
    * Creates a config with a placeholder for visibility condition
    */
   def mkConfig(id: String, isMenuConfig: Boolean, t: KType, props: List[Property],
                inherited: KExpr, depends: List[DependsOn], cs: List[CSymbol]) = {
-    val prompt = props.typeFilter[Prompt].headOption
+    val prompt = props.typeFilter[Prompt]
     val defs = props.typeFilter[Default]
     val sels = props.typeFilter[Select]
     val ranges = props.typeFilter[Range]
@@ -149,6 +154,4 @@ trait KConfigParser extends KExprParser with ImplicitConversions with TypeFilter
   }
 
 }
-
-object KConfigParser extends KConfigParser
 

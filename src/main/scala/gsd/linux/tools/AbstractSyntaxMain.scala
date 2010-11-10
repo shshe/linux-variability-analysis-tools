@@ -28,7 +28,9 @@ import java.io.PrintStream
  *
  * @author Steven She (shshe@gsd.uwaterloo.ca)
  */
-object AbstractSyntaxMain extends AbstractSyntax with AbstractSyntaxWriter {
+object AbstractSyntaxMain extends AbstractSyntaxWriter {
+
+  import AbstractSyntax._
 
   def main(args: Array[String]) : Unit = {
     val out = if (args.size > 1) new PrintStream(args(1)) else System.out

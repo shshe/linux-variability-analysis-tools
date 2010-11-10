@@ -58,7 +58,7 @@ case class ConcreteKConfig(root: CMenu) {
   }(root)
 
   def toAbstractKConfig =
-    new AbstractSyntaxBuilder(this).toAbstractSyntax
+    AbstractSyntax.toAbstractSyntaxBuilder(this).toAbstractSyntax
 }
 
 case class AbstractKConfig(configs: List[AConfig], choices: List[AChoice]) {
@@ -75,7 +75,7 @@ case class AbstractKConfig(configs: List[AConfig], choices: List[AChoice]) {
 
 object AbstractKConfig {
   implicit def fromConcreteKConfig(k: ConcreteKConfig): AbstractKConfig =
-    new AbstractSyntaxBuilder(k).toAbstractSyntax
+    k.toAbstractKConfig
 }
 
 sealed abstract class CSymbol(val id: String,
@@ -101,7 +101,7 @@ case class CConfig(override val id: String,
                    isMenuConfig: Boolean,
                    ktype: KType,
                    inherited: KExpr,
-                   prompt: Option[Prompt],
+                   prompt: List[Prompt],
                    defs: List[Default], sels: List[Select], ranges: List[Range],
                    depends: List[DependsOn],
                    cs: List[CSymbol])

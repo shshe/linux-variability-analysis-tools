@@ -22,7 +22,7 @@ package gsd.linux
 /**
  * Conveience methods for filtering items from a List based on its type.
  */
-trait TypeFilterList {
+object TypeFilterList {
   class SuperList[A <: AnyRef](lst : List[A]) {
 
     /*
@@ -43,4 +43,3 @@ trait TypeFilterList {
   
 }
 
-object TypeFilterList extends TypeFilterList
