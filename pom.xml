@@ -106,10 +106,6 @@
                           <name>BooleanTranslationMain</name>
                       </program>
                       <program>
-                          <mainClass>gsd.linux.tools.TristateTranslationMain</mainClass>
-                          <name>TristateTranslationMain</name>
-                      </program>
-                      <program>
                           <mainClass>gsd.linux.tools.HierarchyMain</mainClass>
                           <name>HierarchyMain</name>
                       </program>
