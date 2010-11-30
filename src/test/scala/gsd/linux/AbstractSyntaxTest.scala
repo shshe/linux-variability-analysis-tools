@@ -36,7 +36,7 @@ class AbstractSyntaxTest extends AssertionsForJUnit
   }
   implicit def toId(s: String) = Id(s)
 
-  @Test def rev() {
+  @Test def rev {
     val sels = Select("A", "X" || "Y") :: Select("A", "Z") :: Nil
     val configs = mkBConfig("A",Nil) :: mkBConfig("B",sels) :: Nil
     val root = mkRoot(configs)

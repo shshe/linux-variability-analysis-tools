@@ -93,11 +93,12 @@ object AbstractSyntax {
      */
     def rev(n: String) = revMap(n).toList
 
+
     lazy val toAbstractSyntax : AbstractKConfig = {
 
       val configs = collectl {
-        case CConfig(id,_,t,inh,p,defs,_,rngs,_,_) =>
-          val pro = ((No: KExpr) /: p){ _ && _.cond }
+        case CConfig(id,_,t,inh,ps,defs,_,rngs,_,_) =>
+          val pro = ((No: KExpr) /: ps){ _ || _.cond }
           AConfig(id,t,inh,pro,addBaseDefault(t, defs),rev(id),rngs)
       }(k)
 
