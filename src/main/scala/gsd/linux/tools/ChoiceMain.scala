@@ -18,9 +18,10 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-package gsd.linux
+package gsd.linux.tools
 
 import java.io.PrintStream
+import gsd.linux._
 
 /**
  * Outputs all choice members as a comma-separated list of feature ids.

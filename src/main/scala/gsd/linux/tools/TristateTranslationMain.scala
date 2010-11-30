@@ -21,6 +21,7 @@
 package gsd.linux.tools
 
 import gsd.linux._
+
 import java.io.PrintStream
 
 /**
@@ -28,12 +29,12 @@ import java.io.PrintStream
  *
  * @author Steven She (shshe@gsd.uwaterloo.ca)
  */
-object BooleanTranslationMain {
+object TristateTranslationMain {
 
   def main(args: Array[String]) : Unit = {
     if (args.size == 0) {
       System.err.println(
-        "BooleanTranslationMain <kconfig-extract-file> [<output-file>]")
+        "TristateTranslation Main <Kconfig-extract-file> [<output-file>]")
       System exit 1
     }
 
@@ -45,9 +46,11 @@ object BooleanTranslationMain {
     //First output identifiers
     for (id <- k.identifiers) out.println("@ " + id)
 
-    val btrans = BooleanTranslation.mkBooleanTranslation(k.toAbstractKConfig)
-    for (id <- btrans.genVars) out.println("$ " + id)
-    for (e  <- btrans.exprs)   out.println(e)
+    val trans = new TristateTranslation(k)
+    val exprs = trans.translate
+
+    for (id <- trans.generated) out.println("$ " + id)
+    for (e  <- exprs) out.println(e)
 
     out.close
   }
