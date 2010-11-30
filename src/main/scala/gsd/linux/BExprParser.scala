@@ -1,12 +1,5 @@
 package gsd.linux
 
-/**
- * Created by IntelliJ IDEA.
- * User: shshe
- * Date: 29-Nov-2010
- * Time: 10:30:22 PM
- * To change this template use File | Settings | File Templates.
- */
 import util.parsing.combinator._
 import util.parsing.input.PagedSeqReader
 import collection.immutable.PagedSeq
@@ -17,7 +10,16 @@ object BExprParser extends RegexParsers with PackratParsers with ImplicitConvers
 
   case class BExprResult(ids: List[String], 
                          generated: List[String],
-                         BExprs: List[BExpr])
+                         expressions: List[BExpr]) {
+
+    lazy val features: List[String] = ids filterNot { generated contains }
+
+    lazy val idMap: Map[String, Int] =
+      (ids.zipWithIndex map { case (id,v) => (id, v+1) }).toMap
+
+    lazy val varMap: Map[Int, String] =
+      (idMap map { case (id,v) => (v, id)}).toMap
+  }
 
   val nl = """[\r]?\n""".r
   val ids  = rep("@" ~> """\w+""".r <~ rep1(nl))
@@ -61,8 +63,11 @@ object BExprParser extends RegexParsers with PackratParsers with ImplicitConvers
 
   def parseBExpr(str: String) = succ(parseAll(orExpr, str))
 
+  def parseBExpr(reader: PagedSeq[Char]) =
+    succ(parseAll(exprresults, reader))
+
   def parseBExprFile(file: String) : BExprResult =
-    succ(parseAll(exprresults, new PagedSeqReader(PagedSeq fromFile file)))
+    parseBExpr(PagedSeq fromFile file)
 
   protected def succ[A](p : ParseResult[A]) = p match {
     case Success(res,_) => res
