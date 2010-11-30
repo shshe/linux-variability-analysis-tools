@@ -17,10 +17,11 @@
  * along with LVAT.  (See files COPYING and COPYING.LESSER.)  If not, see
  * <http://www.gnu.org/licenses/>.
  */
-package gsd.linux
+package gsd.linux.tools
 
 import java.io.PrintStream
 
+import gsd.linux._
 import KConfigParser._
 import Hierarchy._
 
@@ -37,8 +38,9 @@ object HierarchyMain {
 
   def main(args: Array[String]): Unit = {
     if (args.size == 0) {
-      System.err.println("Parameters: 1. Extract file, 2. Output file (optional)")
-      System.exit(1)
+      System.err.println(
+        "HierarchyMain <kconfig-extract-file> [<out-file>]")
+      System exit 1
     }
 
     val k = parseKConfigFile(args head)

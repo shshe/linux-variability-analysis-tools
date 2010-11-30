@@ -18,7 +18,7 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-package gsd.linux.stats
+package gsd.linux.tools
 
 import gsd.linux.{AbstractSyntaxWriter, AbstractSyntax, KConfigParser}
 import java.io.PrintStream

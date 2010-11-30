@@ -92,6 +92,31 @@
                     <scalaVersion>${scala.version}</scalaVersion>
                 </configuration>
             </plugin>
+
+            <!-- assembles scripts -->
+            <plugin>
+              <groupId>org.codehaus.mojo</groupId>
+              <artifactId>appassembler-maven-plugin</artifactId>
+              <version>1.1</version>
+              <configuration>
+                  <extraJvmArguments>-Xss4096k</extraJvmArguments>
+                  <programs>
+                      <program>
+                          <mainClass>gsd.linux.tools.BooleanTranslationMain</mainClass>
+                          <name>BooleanTranslationMain</name>
+                      </program>
+                      <program>
+                          <mainClass>gsd.linux.tools.TristateTranslationMain</mainClass>
+                          <name>TristateTranslationMain</name>
+                      </program>
+                      <program>
+                          <mainClass>gsd.linux.tools.HierarchyMain</mainClass>
+                          <name>HierarchyMain</name>
+                      </program>
+                  </programs>
+              </configuration>
+            </plugin>
+
         </plugins>
     </build>
 
@@ -118,6 +143,11 @@
             <artifactId>junit</artifactId>
             <version>4.7</version>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.clapper</groupId>
+            <artifactId>argot_2.8.0</artifactId>
+            <version>0.2</version>
         </dependency>
         <dependency>
             <groupId>com.googlecode</groupId>
