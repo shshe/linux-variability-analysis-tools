@@ -12,10 +12,10 @@ object BExprParser extends RegexParsers with PackratParsers with ImplicitConvers
                          generated: List[String],
                          expressions: List[BExpr]) {
 
-    lazy val features: List[String] = ids filterNot { generated contains }
+    lazy val all: List[String] = ids ::: generated
 
     lazy val idMap: Map[String, Int] =
-      (ids.zipWithIndex map { case (id,v) => (id, v+1) }).toMap
+      ((ids ::: generated).zipWithIndex map { case (id,v) => (id, v+1) }).toMap
 
     lazy val varMap: Map[Int, String] =
       (idMap map { case (id,v) => (v, id)}).toMap
@@ -30,12 +30,12 @@ object BExprParser extends RegexParsers with PackratParsers with ImplicitConvers
 
 
   private lazy val orExpr : PackratParser[BExpr] =
-    andExpr ~ rep("|".r ~> orExpr) ^^
+    andExpr ~ rep("""\|[\|]?""".r ~> orExpr) ^^
       {
         case x~ys => (x /: ys){ BOr }
       }
   private lazy val andExpr : PackratParser[BExpr] =
-    implExpr ~ rep("&".r ~> andExpr) ^^
+    implExpr ~ rep("&[&]?".r ~> andExpr) ^^
       {
         case x~ys => (x /: ys){ BAnd }
       }

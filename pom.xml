@@ -95,22 +95,30 @@
 
             <!-- assembles scripts -->
             <plugin>
-              <groupId>org.codehaus.mojo</groupId>
-              <artifactId>appassembler-maven-plugin</artifactId>
-              <version>1.1</version>
-              <configuration>
-                  <extraJvmArguments>-Xss4096k</extraJvmArguments>
-                  <programs>
-                      <program>
-                          <mainClass>gsd.linux.tools.BooleanTranslationMain</mainClass>
-                          <name>BooleanTranslationMain</name>
-                      </program>
-                      <program>
-                          <mainClass>gsd.linux.tools.HierarchyMain</mainClass>
-                          <name>HierarchyMain</name>
-                      </program>
-                  </programs>
-              </configuration>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>appassembler-maven-plugin</artifactId>
+                <version>1.1</version>
+                <configuration>
+                    <extraJvmArguments>-Xss4096k</extraJvmArguments>
+                    <programs>
+                        <program>
+                            <mainClass>gsd.linux.tools.BooleanTranslationMain</mainClass>
+                            <name>BooleanTranslationMain</name>
+                        </program>
+                        <program>
+                            <mainClass>gsd.linux.tools.HierarchyMain</mainClass>
+                            <name>HierarchyMain</name>
+                        </program>
+                    </programs>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>package</id>
+                        <goals>
+                            <goal>assemble</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
 
         </plugins>
