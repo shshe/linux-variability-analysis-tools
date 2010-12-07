@@ -3,6 +3,7 @@ package gsd.linux
 import util.parsing.combinator._
 import util.parsing.input.PagedSeqReader
 import collection.immutable.PagedSeq
+import java.io.InputStream
 
 object BExprParser extends RegexParsers with PackratParsers with ImplicitConversions {
 
@@ -20,14 +21,6 @@ object BExprParser extends RegexParsers with PackratParsers with ImplicitConvers
     lazy val varMap: Map[Int, String] =
       (idMap map { case (id,v) => (v, id)}).toMap
   }
-
-  val nl = """[\r]?\n""".r
-  val ids  = rep("@" ~> """\w+""".r <~ rep1(nl))
-  val gens = rep("$" ~> """\w+""".r <~ rep1(nl))
-
-  private lazy val exprresults = ids ~ gens ~
-    (rep(orExpr <~ rep1(nl)) ^^  { _ filterNot { _ == BTrue } }) ^^ BExprResult
-
 
   private lazy val orExpr : PackratParser[BExpr] =
     andExpr ~ rep("""\|[\|]?""".r ~> orExpr) ^^
@@ -63,11 +56,33 @@ object BExprParser extends RegexParsers with PackratParsers with ImplicitConvers
 
   def parseBExpr(str: String) = succ(parseAll(orExpr, str))
 
-  def parseBExpr(reader: PagedSeq[Char]) =
-    succ(parseAll(exprresults, reader))
+  def parseBExprResult(in: InputStream): BExprResult =
+    parseBExprResult(new java.util.Scanner(in))
 
-  def parseBExprFile(file: String) : BExprResult =
-    parseBExpr(PagedSeq fromFile file)
+  /**
+   * More efficient to use scanner to split by line instead of relying solely
+   * on parser combinators.
+   */
+  def parseBExprResult(s: java.util.Scanner) : BExprResult = {
+    import collection.mutable.ListBuffer
+    
+    val ids  = new ListBuffer[String]
+    val gens = new ListBuffer[String]
+    val exprs = new ListBuffer[BExpr]
+
+    while (s.hasNextLine) {
+      val line = s.nextLine
+      if (line.startsWith("@")) ids += line.substring(1).trim
+      else if (line.startsWith("$")) gens += line.substring(1).trim
+      else exprs += parseBExpr(s.nextLine)
+    }
+    s.close
+    BExprResult(ids.toList, gens.toList, exprs.toList filter { _ != BTrue })
+  }
+
+  def parseBExprResult(file: String) : BExprResult =
+    parseBExprResult(new java.util.Scanner(new java.io.File(file)))
+
 
   protected def succ[A](p : ParseResult[A]) = p match {
     case Success(res,_) => res
