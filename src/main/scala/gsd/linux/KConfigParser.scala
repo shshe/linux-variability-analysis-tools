@@ -132,7 +132,7 @@ object KConfigParser extends KExprParser with ImplicitConversions {
         
       }
 
-  def parseKConfig(stream: Reader[Char]): ConcreteKConfig =
+  def parseKConfig(stream: java.io.Reader): ConcreteKConfig =
     succ(parseAll(kconfig, stream))
 
   def parseKConfig(str: String): ConcreteKConfig =
