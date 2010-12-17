@@ -71,6 +71,13 @@ case class AbstractKConfig(configs: List[AConfig], choices: List[AChoice]) {
 
   lazy val idMap: Map[String, Int] =
     Map() ++ (identifiers.toList.zipWithIndex map { case (id, i) => (id, i+1) })
+
+
+  /**
+   * Helper function for finding a particular config, probably belongs elsewhere
+   */
+  def findConfig(id: String): Option[AConfig] =
+    configs.find { case a: AConfig => a.id == id }
 }
 
 object AbstractKConfig {

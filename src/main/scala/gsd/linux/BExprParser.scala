@@ -72,7 +72,8 @@ object BExprParser extends RegexParsers with PackratParsers with ImplicitConvers
 
     while (s.hasNextLine) {
       val line = s.nextLine
-      if (line.startsWith("@")) ids += line.substring(1).trim
+      if (line.trim.isEmpty) {} //do nothing
+      else if (line.startsWith("@")) ids += line.substring(1).trim
       else if (line.startsWith("$")) gens += line.substring(1).trim
       else exprs += parseBExpr(line)
     }

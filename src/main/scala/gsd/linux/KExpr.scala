@@ -27,11 +27,19 @@ package gsd.linux
  */
 sealed abstract class KExpr(children : List[KExpr]) {
 
-  def ||(other : KExpr) : KExpr = Or(this,other)
-  def &&(other : KExpr) : KExpr = And(this, other)
+  def ||(other : KExpr): KExpr =
+    if (this == No) other
+    else if (other == No) this
+    else Or(this,other)
+
+  def &&(other : KExpr): KExpr =
+    if (this == Yes) other
+    else if (other == Yes) this
+    else And(this, other)
+
   def unary_! : KExpr = Not(this)
 
-  def splitConjunctions : List[KExpr] = this match {
+  def splitConjunctions: List[KExpr] = this match {
     case And(x,y) => x.splitConjunctions ::: y.splitConjunctions
     case e => List(e)
   }

@@ -56,18 +56,6 @@ object AbstractSyntax {
 
     import TypeFilterList._
 
-    /**
-     * Helper function for finding a particular config, probably belongs elsewhere
-     */
-    def find(id: String): Option[CConfig] = {
-      var result : Option[CConfig] = None
-      oncetd {
-        rule {
-          case c: CConfig if c.id == id => result = Some(c)
-        }
-      }(k)
-      result
-    }
 
     /**
      * A map from an identifier to its select expressions

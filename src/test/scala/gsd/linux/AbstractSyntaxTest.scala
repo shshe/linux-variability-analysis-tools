@@ -43,9 +43,4 @@ class AbstractSyntaxTest extends AssertionsForJUnit
     assert(root.rev("A").toSet == Set("B" && ("X" || "Y"),"B" && "Z"))
   }
 
-  @Test def find {
-    val root = mkRoot(mkBConfig("A",Nil) :: mkBConfig("B",Nil) :: Nil)
-    assert(root.find("A").get.id == "A")
-    assert(root.find("B").get.id == "B")
-  }
 }
