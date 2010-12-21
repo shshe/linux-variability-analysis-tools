@@ -40,4 +40,8 @@ object Combinations {
       case _ => error("should never happen")
     }
   }
+
+  def all[A](in: List[A]): List[List[A]] =
+    (1 to in.size) flatMap { i => choose(i, in) } toList
+
 }
