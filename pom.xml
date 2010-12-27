@@ -109,6 +109,10 @@
                             <mainClass>gsd.linux.tools.HierarchyMain</mainClass>
                             <name>HierarchyMain</name>
                         </program>
+                        <program>
+                            <mainClass>gsd.linux.tools.ASEStatisticsMain</mainClass>
+                            <name>ASEStatisticsMain</name>
+                        </program>
                     </programs>
                 </configuration>
                 <executions>
