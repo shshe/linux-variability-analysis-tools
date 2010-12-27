@@ -41,7 +41,11 @@ class FeatureStatistics(val k: ConcreteKConfig) {
   }(k)
 
   lazy val menus = collectl {
-    case m: CMenu => m
+    case m@CMenu(_,false,_) => m
+  }(k)
+
+  lazy val ifConds = collectl {
+    case i@CMenu(_,true,_) => i
   }(k)
 
   lazy val choices = collectl {
@@ -104,7 +108,7 @@ class FeatureStatistics(val k: ConcreteKConfig) {
   lazy val properties = collectl {
     case CConfig(id,_,_,_,pro,defs,sels,rngs,_,_) =>
       pro.toList ::: defs ::: sels ::: rngs
-    case CMenu(pro,_) => pro
+    case CMenu(pro,_,_) => pro
     case CChoice(pro,_,_,defs,_) => pro :: defs
   }(k)
 

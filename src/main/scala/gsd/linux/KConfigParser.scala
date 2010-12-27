@@ -82,41 +82,38 @@ object KConfigParser extends KExprParser with ImplicitConversions {
     prompt | depends | default | range | select | env
 
   private lazy val kconfig: PackratParser[ConcreteKConfig] =
-  syms ^^ { c => ConcreteKConfig(CMenu(Prompt(rootId,Yes), c)) }
+  syms ^^ { c => ConcreteKConfig(CMenu(Prompt(rootId,Yes), false, c)) }
 
-  //FIXME temporary hack to get around ignoring if statements
   private lazy val syms: PackratParser[List[CSymbol]] =
     rep {
-      menu ^^ { List(_) } |
-      config ^^ { List(_) } |
-      choice ^^ { List(_) } |
-      ifSym
-    } ^^ { _.flatten[CSymbol] }
-
-
-  //FIXME ignoring if statements
-  private lazy val ifSym =
-  "if" ~> exExpr ~ ("{" ~> syms <~ "}") ^^
-    {
-       case e~children => children
+      menu | config | choice | ifSym
     }
 
+
+  private lazy val ifSym =
+    "if" ~> exExpr ~ ("{" ~> syms <~ "}") ^^
+      {
+         case e~children => CMenu(Prompt("If", e), true, children)
+      }
+
   private lazy val menu =
-    "menu" ~> {
-      strLiteral ~ {
-        "{" ~> opt(depends) ^^ { d => ( d getOrElse DependsOn(Yes) ).cond }
-      } ^^ Prompt
-    } ~ syms <~ "}" ^^ CMenu
+    ("menu" ~> strLiteral ~
+        ("{" ~> opt(depends)) ~ syms <~ "}") ^^
+      {
+        case name~dep~children =>
+          CMenu(Prompt(name, (dep getOrElse DependsOn(Yes)).cond), false, children)
+      }
 
   private lazy val choice =
     "choice" ~> (kType ^^ { _ == KBoolType }) ~
-      (opt("optional") ^^ { !_.isDefined }) ~ ("{" ~> rep(prompt|default|depends)) ~
-      rep(config) <~ "}" ^^
-        {
-          case isBool~isMand~props~cs =>
-            val p = props.typeFilter[Prompt].head
-            CChoice(p,isBool,isMand,props.typeFilter[Default],cs)
-        }
+      (opt("optional") ^^ { !_.isDefined }) ~
+      ("{" ~>
+        rep(prompt|default|depends)) ~ rep(config) <~ //Choices can have depends on, but we ignore them
+      "}" ^^ {
+        case isBool~isMand~props~cs =>
+          val p = props.typeFilter[Prompt].head
+          CChoice(p,isBool,isMand,props.typeFilter[Default],cs)
+      }
 
   private lazy val config =
     ("config" ^^^ false | "menuconfig" ^^^ true) ~ identifier ~

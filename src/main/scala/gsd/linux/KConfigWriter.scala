@@ -66,7 +66,7 @@ trait KConfigWriter extends KExprWriter {
           nest(2, mkInherited(inh)) :/:
           nest(2, mkChildren(cs)) :/: text("}")
 
-      case CMenu(Prompt(txt,cond),cs) =>
+      case CMenu(Prompt(txt,cond),_,cs) => //FIXME ignoring if conditions
         group("menu" :/: "\"" + txt + "\"" :/: text("{")) :/:
           nest(2, group("depends on" :/: "[" :: cond.toDocument :: text("]"))) :/:
           nest(2, mkChildren(cs)) :/: text("}")
