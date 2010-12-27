@@ -42,7 +42,12 @@ case class ConcreteKConfig(root: CMenu) {
 
   lazy val menus: List[CMenu] =
     collectl {
-      case m: CMenu => m
+      case m@CMenu(_,false,_) => m
+    }(root)
+
+  lazy val ifConds: List[CMenu] =
+    collectl {
+      case m@CMenu(_,true,_) => m
     }(root)
 
   lazy val features: List[CSymbol] =
@@ -114,7 +119,7 @@ case class CConfig(override val id: String,
                    cs: List[CSymbol])
         extends CSymbol(id, prompt.toList ::: defs ::: sels ::: ranges, cs)
 
-case class CMenu(prompt: Prompt, cs: List[CSymbol])
+case class CMenu(prompt: Prompt, isIf: Boolean, cs: List[CSymbol])
         extends CSymbol("\"" + prompt.text + "\"", List(prompt), cs)
 
 case class CChoice(prompt: Prompt, isBool: Boolean, isMand:Boolean,

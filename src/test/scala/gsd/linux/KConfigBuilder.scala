@@ -24,7 +24,7 @@ import KConfigParser.mkConfig
 trait KConfigBuilder {
 
   def mkMenu(text: String, cond: KExpr, cs: List[CSymbol]) =
-    CMenu(Prompt(text,cond), cs)
+    CMenu(Prompt(text,cond), false, cs)
 
   def mkBConfig(id: String, props: List[Property]): CConfig =
     mkConfig(id, false, KBoolType, props, Yes, Nil, Nil)
@@ -33,7 +33,7 @@ trait KConfigBuilder {
     mkConfig(id, false, KBoolType, props, Yes, Nil, cs)
 
   def mkRoot(syms: List[CSymbol]) =
-    ConcreteKConfig(CMenu(Prompt("Linux Kernel Configuration", Yes), syms))
+    ConcreteKConfig(CMenu(Prompt("Linux Kernel Configuration", Yes), false, syms))
 
 
 }
