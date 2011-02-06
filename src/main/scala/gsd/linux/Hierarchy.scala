@@ -46,7 +46,7 @@ object Hierarchy {
   /**
    * A map from any feature (config, menu and choices) to its closest Config.
    * Features that have no config in its ancestors are not present in the
-   * returnedmap.
+   * returned map.
    * 
    * This map contains all features - configs, menus and choices.
    */

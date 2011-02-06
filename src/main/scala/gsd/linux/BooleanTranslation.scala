@@ -114,12 +114,11 @@ object BooleanTranslation extends KExprList with BExprList with ExprRewriter {
             //Remove defaults with value 'No' or Literal("")
             {
               lst filterNot
-                { case Default(iv, _) => iv == No | iv == Literal("") } map 
-                {
+                { case Default(iv, _) => iv == No | iv == Literal("") } map {
                   case Default(Yes, c) => negatedPrev & toBExpr(c)
                   case Default(Mod, c) => negatedPrev & toBExpr(c)
                   case Default(v: Value, c)   => negatedPrev & toBExpr(c)
-                  case Default(iv, c) => negatedPrev & toBExpr(c && iv)
+                  case Default(iv, c) => negatedPrev & toBExpr(c && iv) //FIXME problem?
                 }
             } ++ acc
           }
@@ -181,23 +180,21 @@ object BooleanTranslation extends KExprList with BExprList with ExprRewriter {
         val asCons = krevs.map(toBExpr) ::: mkDefaults(defs)
         val numOfIds = identifiers(proE).size + identifiers(asCons).size
 
-        //Heuristic for estimating size of resulting CNF translation
-        if (numOfIds < 40 && asCons.size < 5)
-          (proE | (asAnte.mkDisjunction implies BId(id)) &
-                  (BId(id) implies asCons.mkDisjunction)) :: Nil
-        else {
-          val equivs = asCons.map { e => cache(e) iff e }
-          (proE | (replaceWithVars(asAnte).mkDisjunction implies BId(id)) &
-                  (BId(id) implies replaceWithVars(asCons).mkDisjunction)) :: equivs
-        }
+        val equivs = asCons.map { e => cache(e) iff e }
+        (proE | (replaceWithVars(asAnte).mkDisjunction implies BId(id)) &
+          (BId(id) implies replaceWithVars(asCons).mkDisjunction)) :: equivs
     }
 
     BTrans(exprs, IdGen.allIds)
   }
 
 
+  /**
+   * Currently not used.
+   */
   def mkInherited(k: AbstractKConfig): List[BExpr] = k.configs.map {
-    case AConfig(id, t, vis, pro, defs, rev, rngs) => BId(id) implies toBExpr(vis)
+    case AConfig(id, t, inherited, pro, defs, rev, rngs) =>
+      BId(id) implies toBExpr(inherited)
   }
 
   def mkChoice(k: AbstractKConfig): List[BExpr] = k.choices.flatMap {
@@ -219,7 +216,7 @@ object BooleanTranslation extends KExprList with BExprList with ExprRewriter {
    */
   def mkBooleanTranslation(k: AbstractKConfig) : BTrans = {
     val pres = mkPresence(k)
-    BTrans(pres.exprs ::: mkInherited(k) ::: mkChoice(k), pres.genVars)
+    BTrans(pres.exprs ::: mkChoice(k), pres.genVars)
   }
 }
 

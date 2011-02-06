@@ -98,7 +98,7 @@ sealed abstract class ASymbol
 /* ~~~~~~~~~~~~~~~
  * Abstract Syntax
  * ~~~~~~~~~~~~~~~ */
-case class AConfig(id: String, ktype: KType, vis: KExpr, pro: KExpr,
+case class AConfig(id: String, ktype: KType, inherited: KExpr, pro: KExpr,
                    defs: List[Default], rev: List[KExpr], ranges: List[Range])
         extends ASymbol
 
