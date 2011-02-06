@@ -6,16 +6,43 @@ import org.kiama.rewriting.Rewriter
 trait VisibilityStatistics {
   this: ASEStatistics =>
 
+
+
   // Must have a prompt defined, but with a condition == 'yes'
   lazy val configsWithNoVisConds = ppk.allConfigs filter { c =>
-    !c.prompt.isEmpty && (c.prompt forall { _.cond == Yes })
+    (c.prompt.size == 1) && (c.prompt forall { _.cond == Yes })
   }
 
-  // Explicitly defined prompt (i.e. condition not propagated by an inherited
-  // or depends on condition)
+  // Conditionally derived
   lazy val configsWithVisConds = ppk.allConfigs filter { c =>
-    c.prompt exists { _.cond != Yes }
+    (c.prompt.size == 1) && (c.prompt exists { _.cond != Yes })
   }
+
+  // Conditionall derived
+  lazy val configsWithMultiplePrompts = ppk.allConfigs filter { c =>
+    c.prompt.size > 1
+  }
+
+  // Configs that are NEVER user-selectable
+  lazy val configsWithUncondDerived = ppk.allConfigs filter { c =>
+    c.prompt.isEmpty
+  }
+
+
+
+  //
+  // Derivation statistics
+  //
+  lazy val derivedConfigs = configsWithUncondDerived
+
+  lazy val condDerivedConfigs =
+    (configsWithVisConds ++ configsWithMultiplePrompts ++
+      (configsWithRevDeps filterNot { configsWithUncondDerived.contains })).toSet
+
+  lazy val userDefinedConfigs =
+    configsWithNoVisConds filterNot { configsWithRevDeps.contains }
+
+
 
   // Configs with defaults that have the same condition as its prompt
   lazy val configsWithTrueDefs = ppk.allConfigs filter { c =>
@@ -27,10 +54,6 @@ trait VisibilityStatistics {
     c.defs exists  { d => c.prompt exists { _.cond != d.cond } }
   } distinct
 
-  // Configs that are NEVER user-selectable
-  lazy val configsWithUncondDerived = ppk.allConfigs filter { c =>
-    c.prompt.isEmpty
-  }
 
   lazy val configsWithRevDeps =
     apk.configs filter { !_.rev.isEmpty }
