@@ -68,7 +68,7 @@ object BooleanTranslation extends KExprList with BExprList with ExprRewriter {
       case Not(e) => BNot(translate(e)) //TODO Check this, may make a constraint stronger
       case Id(n) => BId(n)
 
-      case e => error("Unexpected: " + e + ": " + e.getClass)
+      case e => sys.error("Unexpected: " + e + ": " + e.getClass)
     }
     translate(in)
   }
@@ -204,7 +204,7 @@ object BooleanTranslation extends KExprList with BExprList with ExprRewriter {
     case AChoice(vis, isBool, isMand, memIds) =>
       val xors = Combinations.choose(2, memIds).map {
         case fst :: snd :: Nil => !BId(fst) | !BId(snd)
-        case _ => error("This should never happen")
+        case _ => sys.error("This should never happen")
       }
 
       val disj = toBExpr(vis) implies (memIds.map(BId): List[BExpr]).reduceLeft(BOr)
