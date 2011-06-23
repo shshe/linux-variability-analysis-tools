@@ -79,7 +79,7 @@ trait KExprParser extends JavaTokenParsers with PackratParsers with ImplicitConv
 
   protected def succ[A](p : ParseResult[A]) = p match {
     case Success(res,_) => res
-    case x => error(x.toString)
+    case x => sys.error(x.toString)
   }
 
   def parseKExpr(stream : Reader[Char]) = succ(parseAll(expr, stream))

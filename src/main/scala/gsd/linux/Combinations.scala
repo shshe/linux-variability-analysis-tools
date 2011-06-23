@@ -37,7 +37,7 @@ object Combinations {
     if (n == 0) List(Nil)
     else flatMapSublists(lst){
       case head::tail => choose(n - 1, tail).map { head :: _ }
-      case _ => error("should never happen")
+      case _ => sys.error("should never happen")
     }
   }
 

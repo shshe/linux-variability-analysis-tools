@@ -38,8 +38,5 @@ object TypeFilterList {
   implicit def toSuperList[A <: AnyRef](lst: List[A]) =
     new SuperList[A](lst)
 
-  implicit def toSuperList[A <: AnyRef](set: Set[A]) =
-    new SuperList[A](set.toList)
-  
 }
 
