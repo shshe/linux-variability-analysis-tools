@@ -77,13 +77,21 @@ trait KExprParser extends JavaTokenParsers with PackratParsers with ImplicitConv
 
   lazy val primaryExpr = "(" ~> expr <~ ")" | idOrValue
 
-  protected def succ[A](p : ParseResult[A]) = p match {
+  def succ[A](p : ParseResult[A]) = p match {
     case Success(res,_) => res
     case x => sys.error(x.toString)
   }
 
-  def parseKExpr(stream : Reader[Char]) = succ(parseAll(expr, stream))
-  def parseKExpr(str : String) = succ(parseAll(expr, str))
+  // FIXME different behaviour from overloaded method
+  def parseKExpr(stream : Reader[Char]): KExpr = succ(parseAll(expr, stream))
+
+  def parseKExpr(str : String): KExpr =
+    if (str.length == 0) Yes
+    else succ(parseAll(expr, str))
+
+  def parseId(str: String) = succ(parseAll(identifier, str))
+
+  def parseIdOrValue(str: String) = succ(parseAll(idOrValue, str))
 }
 
 object KExprParser extends KExprParser

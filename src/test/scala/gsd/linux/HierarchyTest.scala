@@ -25,13 +25,18 @@ import org.junit.Test
 
 import Hierarchy._
 
-class HierarchyTest extends AssertionsForJUnit with KConfigBuilder {
+class HierarchyTest extends AssertionsForJUnit {
+
+  val ROOT_NAME = "_ROOT"
 
   @Test def testParentMapEasy {
-    val k = mkRoot(List(mkBConfig("A", Nil, List(
-      mkBConfig("B", Nil, List(
-        mkBConfig("D", Nil, Nil))),
-      mkBConfig("C", Nil, Nil)))))
+    val k =
+      ConcreteKConfig(
+        CMenu(1, Prompt(ROOT_NAME), List(
+          CConfig(2, "A", cs = List(
+            CConfig(3, "B", cs = List(
+              CConfig(4, "D"))),
+            CConfig(5, "C"))))))
 
     val pMap = toStringMap(mkConfigMap(k), k.allConfigs, "_ROOT")
     assert(pMap("A") == "_ROOT")
@@ -41,10 +46,13 @@ class HierarchyTest extends AssertionsForJUnit with KConfigBuilder {
   }
 
   @Test def testParentMapWithMenus {
-    val k = mkRoot(List(mkBConfig("A", Nil, List(
-    mkMenu("Doesn't Matter", Yes, List(
-      mkBConfig("B", Nil, List(
-        mkBConfig("C", Nil, Nil)))))))))
+    val k =
+      ConcreteKConfig(
+        CMenu(1, Prompt(ROOT_NAME), List(
+          CConfig(2, "A", cs = List(
+            CMenu(3, Prompt("Doesn't Matter"), List(
+              CConfig(4, "B", cs = List(
+                CConfig(5, "C"))))))))))
 
     val pMap = toStringMap(mkConfigMap(k), k.allConfigs, "_ROOT")
     assert(pMap("A") == "_ROOT")

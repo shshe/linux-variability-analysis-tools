@@ -89,23 +89,13 @@ class FeatureStatistics(val k: ConcreteKConfig) {
   }
 
   lazy val branchingMap : Map[CSymbol,List[CSymbol]] =
-    Map() ++ features.map { f => (f, f.children) }
-
-  lazy val parentTuples = collectl {
-    case c:CSymbol => c.children.map { _.id -> c.id }
-  }(k).flatten[(String,String)]
-  
-  lazy val parentMap = Map() ++ parentTuples
-
-  lazy val identifiers = collectl {
-    case c:CSymbol => c.id
-  }(k)
+    features map { f => (f, f.children) } toMap
 
   lazy val properties = collectl {
-    case CConfig(id,_,_,_,pro,defs,sels,rngs,_,_) =>
+    case CConfig(_,_,_,_,_,pro,defs,sels,rngs,_,_) =>
       pro.toList ::: defs ::: sels ::: rngs
-    case CMenu(pro,_) => pro
-    case CChoice(pro,_,_,defs,_) => pro :: defs
+    case CMenu(_,pro,_) => pro
+    case CChoice(_,pro,_,_,defs,_) => pro :: defs
   }(k)
 
   lazy val ranges   = properties.typeFilter[Range]

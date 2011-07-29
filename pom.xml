@@ -153,6 +153,11 @@
             <scope>test</scope>
         </dependency>
         <dependency>
+            <groupId>com.google.protobuf</groupId>
+            <artifactId>protobuf-java</artifactId>
+            <version>2.4.1</version>
+        </dependency>
+        <dependency>
             <groupId>com.googlecode</groupId>
             <artifactId>kiama_2.9.0-1</artifactId>
             <version>1.1.0</version>

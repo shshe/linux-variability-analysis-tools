@@ -48,12 +48,22 @@ case class ConcreteKConfig(root: CMenu) {
   lazy val features: List[CSymbol] =
     allConfigs ++ menus ++ choices
 
+  lazy val ifNodes: List[CIf] =
+    collectl {
+      case c: CIf => c
+    }(root)
+
+  lazy val comments: List[CComment] =
+    collectl {
+      case c: CComment => c
+    }(root)
+
   /**
    * Set of all identifiers and identifier references in the Kconfig model.
    */
   lazy val identifiers: Set[String] =
   collects {
-    case c: CConfig => c.id
+    case c: CConfig => c.name
     case Id(n) => n
   }(root)
 
@@ -65,7 +75,7 @@ case class AbstractKConfig(configs: List[AConfig], choices: List[AChoice]) {
 
   lazy val identifiers: Set[String] =
     collects {
-      case c: AConfig => c.id
+      case c: AConfig => c.name
       case Id(n) => n
     }(configs ::: choices) 
 
@@ -76,24 +86,26 @@ case class AbstractKConfig(configs: List[AConfig], choices: List[AChoice]) {
   /**
    * Helper function for finding a particular config, probably belongs elsewhere
    */
-  def findConfig(id: String): Option[AConfig] =
-    configs.find { case a: AConfig => a.id == id }
+  def findConfig(findName: String): Option[AConfig] =
+    configs.find { case a: AConfig => a.name == findName }
 }
 
+// FIXME what exactly is an abstract kconfig
 object AbstractKConfig {
   implicit def fromConcreteKConfig(k: ConcreteKConfig): AbstractKConfig =
     k.toAbstractKConfig
 }
 
-sealed abstract class CSymbol(val id: String,
+sealed abstract class CSymbol(val nodeId: Int,
                               val properties: List[Property],
+                              val isVirtual: Boolean, // Whether the node is a real symbol or not (i.e. if node)
                               val children: List[CSymbol])
 sealed abstract class ASymbol
 
 /* ~~~~~~~~~~~~~~~
  * Abstract Syntax
  * ~~~~~~~~~~~~~~~ */
-case class AConfig(id: String, ktype: KType, vis: KExpr, pro: KExpr,
+case class AConfig(name: String, ktype: KType, vis: KExpr, pro: KExpr,
                    defs: List[Default], rev: List[KExpr], ranges: List[Range])
         extends ASymbol
 
@@ -104,29 +116,43 @@ case class AChoice(vis: KExpr, isBool: Boolean, isMand: Boolean,
 /* ~~~~~~~~~~~~~~~
  * Concrete Syntax
  * ~~~~~~~~~~~~~~~ */
-case class CConfig(override val id: String,
-                   isMenuConfig: Boolean,
-                   ktype: KType,
-                   inherited: KExpr,
-                   prompt: List[Prompt],
-                   defs: List[Default], sels: List[Select], ranges: List[Range],
-                   depends: List[DependsOn],
-                   cs: List[CSymbol])
-        extends CSymbol(id, prompt.toList ::: defs ::: sels ::: ranges, cs)
 
-case class CMenu(prompt: Prompt, cs: List[CSymbol])
-        extends CSymbol("\"" + prompt.text + "\"", List(prompt), cs)
+case class CConfig(nId: Int,
+                   name: String,
+                   isMenuConfig: Boolean = false,
+                   ktype: KType = KBoolType,
+                   inherited: KExpr = Yes,
+                   prompt: List[Prompt] = Nil,
+                   defs: List[Default] = Nil,
+                   sels: List[Select] = Nil,
+                   ranges: List[Range] = Nil,
+                   depends: List[DependsOn] = Nil,
+                   cs: List[CSymbol] = Nil)
+        extends CSymbol(nId, prompt.toList ::: defs ::: sels ::: ranges, false, cs)
 
-case class CChoice(prompt: Prompt, isBool: Boolean, isMand:Boolean,
-                   defs: List[Default], cs: List[CSymbol])
-        extends CSymbol("\"" + prompt.text + "\"", prompt :: defs, cs)
+case class CMenu(nId: Int,
+                 prompt: Prompt,
+                 cs: List[CSymbol] = Nil)
+        extends CSymbol(nId, List(prompt), false, cs)
+
+case class CChoice(nId: Int,
+                   prompt: Prompt,
+                   isBool: Boolean,
+                   isMand: Boolean,
+                   defs: List[Default] = Nil,
+                   cs: List[CConfig] = Nil)
+        extends CSymbol(nId, prompt :: defs, false, cs)
+
+case class CIf(nId: Int, condition: KExpr, cs: List[CSymbol] = Nil) extends CSymbol(nId, Nil, true, cs)
+
+case class CComment(nId: Int, text: String, condition: KExpr) extends CSymbol(nId, Nil, true, Nil)
 
 sealed abstract class Property(val cond: KExpr)
-case class Prompt(text: String, c: KExpr) extends Property(c)
-case class Default(iv: KExpr, c: KExpr) extends Property(c)
-case class Select(id: String, c: KExpr) extends Property(c)
-case class Range(low: IdOrValue, high: IdOrValue, c: KExpr) extends Property(c)
-case class Env(id: String, c: KExpr) extends Property(c)
+case class Prompt(text: String, c: KExpr = Yes) extends Property(c)
+case class Default(iv: KExpr, c: KExpr = Yes) extends Property(c)
+case class Select(id: String, c: KExpr = Yes) extends Property(c)
+case class Range(low: IdOrValue, high: IdOrValue, c: KExpr = Yes) extends Property(c)
+case class Env(id: String, c: KExpr = Yes) extends Property(c)
 
 case class DependsOn(cond: KExpr)
 
