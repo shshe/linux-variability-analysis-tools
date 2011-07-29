@@ -6,6 +6,12 @@ import gsd.linux.KConfigParser
 object ASEStatisticsMain {
 
   def representationStats(stats: ASEStatistics)(out: PrintStream) {
+    out.println("Configs:     " + stats.configs.size)
+    out.println("Menuconfigs: " + stats.menuconfigs.size)
+    out.println("Menus:       " + stats.menus.size)
+    out.println
+    out.println("Number of identifiers: " + stats.k.identifiers.size)
+    out.println
     out.println("Bool:   " + stats.boolType.size)
     out.println("Tri:    " + stats.tristateType.size)
 
@@ -72,11 +78,11 @@ object ASEStatisticsMain {
 
     val combos =
       calculatePartitions(
-        Array((stats.configsWithUncondDerived map { _.id }).toSet,
-          (stats.configsWithCondDerived map { _.id }).toSet,
-          (stats.configsWithTrueDefs map { _.id }).toSet),
-        Array((stats.configsWithTrueDefs map { _.id }).toSet,
-          (stats.configsWithRevDeps map { _.id }).toSet),
+        Array((stats.configsWithUncondDerived map { _.name }).toSet,
+          (stats.configsWithCondDerived map { _.name }).toSet,
+          (stats.configsWithTrueDefs map { _.name }).toSet),
+        Array((stats.configsWithTrueDefs map { _.name }).toSet,
+          (stats.configsWithRevDeps map { _.name }).toSet),
         Array("w/RealDefaults", "w/RevDep"))
 
     printComboSizes(combos, Array("Uncond.Derived", "Cond.Derived", "RealDefs."))

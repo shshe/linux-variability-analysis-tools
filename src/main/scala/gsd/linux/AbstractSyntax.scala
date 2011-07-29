@@ -43,8 +43,8 @@ object AbstractSyntax {
   }
   
   def mkAChoice(c: CChoice) = c match {
-    case CChoice(Prompt(_,vis),isBool,isMand,defs,cs) =>
-      AChoice(vis, isBool, isMand, cs map { _.id })
+    case CChoice(_,Prompt(_,vis),isBool,isMand,defs,cs) =>
+      AChoice(vis, isBool, isMand, cs map { _.name })
   }
 
   /**
@@ -65,8 +65,8 @@ object AbstractSyntax {
               with MultiMap[String, KExpr]
       everywheretd {
         query {
-          case CConfig(id,_,_,_,_,_,sels,_,_,_) =>
-            sels.map { case Select(n,e) => (n, Id(id) && e) }.foreach {
+          case CConfig(_,name,_,_,_,_,_,sels,_,_,_) =>
+            sels.map { case Select(n,e) => (n, Id(name) && e) }.foreach {
               case (k,v) => mutMap addBinding (k,v)
             }
         }
@@ -85,9 +85,9 @@ object AbstractSyntax {
     lazy val toAbstractSyntax : AbstractKConfig = {
 
       val configs = collectl {
-        case CConfig(id,_,t,inh,ps,defs,_,rngs,_,_) =>
+        case CConfig(_,name,_,t,inh,ps,defs,_,rngs,_,_) =>
           val pro = ((No: KExpr) /: ps){ _ || _.cond }
-          AConfig(id,t,inh,pro,addBaseDefault(t, defs),rev(id),rngs)
+          AConfig(name,t,inh,pro,addBaseDefault(t, defs),rev(name),rngs)
       }(k)
 
       val choices = collectl {

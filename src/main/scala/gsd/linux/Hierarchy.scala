@@ -46,9 +46,11 @@ object Hierarchy {
   /**
    * A map from any feature (config, menu and choices) to its closest Config.
    * Features that have no config in its ancestors are not present in the
-   * returnedmap.
+   * returned map.
    * 
    * This map contains all features - configs, menus and choices.
+   *
+   * FIXME If nodes.
    */
   def mkParentMap(k: ConcreteKConfig): AParentMap = {
 
@@ -64,7 +66,7 @@ object Hierarchy {
         case Some(p) => curr match {
           case c: CConfig =>
             (c, p) :: c.children.flatMap(_mkTuples(Some(c)))
-          case _: CMenu | _: CChoice =>
+          case _ =>
             (curr, p) :: curr.children.flatMap(_mkTuples(par))
         }
       }
@@ -82,11 +84,13 @@ object Hierarchy {
   }
 
 
-  def toStringMap[A <: CSymbol](in: Map[A, CConfig], features: Iterable[A], root: String) =
-    Map() ++ features.map { f => f -> in.get(f) }.map {
-      case (x, Some(y)) => x.id -> y.id
-      case (x, None) => x.id -> root
-    }
+  def toStringMap(in: Map[CConfig, CConfig], features: Iterable[CConfig], root: String) =
+    features map
+      { f => f -> in.get(f) } map
+      {
+        case (x, Some(y)) => x.name -> y.name
+        case (x, None) => x.name -> root
+      } toMap
 
 
 }
