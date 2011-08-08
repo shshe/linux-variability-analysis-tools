@@ -79,13 +79,16 @@ class FeatureStatistics(val k: ConcreteKConfig) {
 
   lazy val mandMenus = menus.filter { _.prompt.cond != Yes }
   
-  lazy val leafDepthMap : Map[CSymbol, Int] = {
-    def addChildren(depth: Int)(elem: CSymbol) : List[(CSymbol,Int)] =
-      if (elem.children.isEmpty)
-        (elem, depth) :: elem.children.flatMap { addChildren(depth+1) }
-      else elem.children.flatMap { addChildren(depth+1) }
-
-    Map() ++ addChildren(0)(k.root)
+  lazy val leafDepthMap : Map[CConfig, Int] = {
+    def addChildren(depth: Int)(elem: CSymbol) : List[(CConfig,Int)] = elem match {
+      case c: CConfig if c.children.isEmpty =>
+        (c, depth) :: elem.children.flatMap { addChildren(depth+1) }
+      case x if x.isVirtual =>
+        elem.children.flatMap { addChildren(depth) }
+      case _ =>
+        elem.children.flatMap { addChildren(depth+1) }
+    }
+    addChildren(0)(k.root) toMap
   }
 
   lazy val branchingMap : Map[CSymbol,List[CSymbol]] =
