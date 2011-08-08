@@ -27,7 +27,7 @@
 
     <groupId>ca.uwaterloo.gsd</groupId>
     <artifactId>lvat</artifactId>
-    <version>0.3-SNAPSHOT</version>
+    <version>0.5-SNAPSHOT</version>
     <name>Linux Variability Analysis Tools</name>
 
     <properties>

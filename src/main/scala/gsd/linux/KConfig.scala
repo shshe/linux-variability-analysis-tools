@@ -96,7 +96,7 @@ object AbstractKConfig {
     k.toAbstractKConfig
 }
 
-sealed abstract class CSymbol(val nodeId: Int,
+sealed abstract class CSymbol(val nodeId: Int, // The unique node identifier
                               val properties: List[Property],
                               val isVirtual: Boolean, // Whether the node is a real symbol or not (i.e. if node)
                               val children: List[CSymbol])
