@@ -20,9 +20,12 @@
 
 package gsd.linux
 
+import java.io.InputStream
+
 trait KConfigParser {
   def parseKConfigFile(file: String): ConcreteKConfig
   def parseKConfig(input: String): ConcreteKConfig
+  def parseKConfigStream(inputStream: InputStream): ConcreteKConfig
 }
 
 object KConfigParser extends KConfigParser {
@@ -38,6 +41,18 @@ object KConfigParser extends KConfigParser {
     catch {
       case _ =>
         (new ExconfigParser).parseKConfig(input)
+    }
+  }
+
+  // First try to parse using the protobuf parser and if it fails, then use
+  // the exconfig parser.
+  def parseKConfigStream(stream: InputStream): ConcreteKConfig = {
+    try {
+      (new ProtoParser).parseKConfigStream(stream)
+    }
+    catch {
+      case _ =>
+        (new ExconfigParser).parseKConfigStream(stream)
     }
   }
 

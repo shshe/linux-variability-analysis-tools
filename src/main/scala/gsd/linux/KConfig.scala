@@ -67,6 +67,12 @@ case class ConcreteKConfig(root: CMenu) {
     case Id(n) => n
   }(root)
 
+  lazy val configMap: Map[String, CConfig] =
+    allConfigs map { c => c.name -> c } toMap
+
+  lazy val nodeIdMap: Map[Int, CSymbol] =
+    features map { f => f.nodeId -> f } toMap
+
   def toAbstractKConfig =
     AbstractSyntax.toAbstractSyntaxBuilder(this).toAbstractSyntax
 }

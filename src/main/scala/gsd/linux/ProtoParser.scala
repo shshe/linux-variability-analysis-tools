@@ -20,9 +20,9 @@
 
 package gsd.linux
 
-import java.io.FileInputStream
 import gsd.linux.KconfigProtos.Node.NodeType
 import com.google.protobuf.ByteString
+import java.io.{InputStream, FileInputStream}
 
 class ProtoParser extends KConfigParser {
 
@@ -50,6 +50,9 @@ class ProtoParser extends KConfigParser {
 
   def parseKConfig(input: String): ConcreteKConfig =
     parseKConfig(Node.parseFrom(input.getBytes))
+
+  def parseKConfigStream(stream: InputStream): ConcreteKConfig =
+    parseKConfig(Node.parseFrom(stream))
 
   def parseKConfig(rootProto: Node): ConcreteKConfig = {
     import Node.DataType._
