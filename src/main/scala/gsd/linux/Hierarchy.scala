@@ -33,15 +33,11 @@ object Hierarchy {
   /**
    * Creates a map containing only of concrete features: Configs and not Menus
    * or Choices.
-   *
-   * TODO this method should be removed.
-   * @deprecated
    */
   def mkConfigMap(k: ConcreteKConfig): CParentMap =
-    Map() ++ mkParentMap(k).filter {
-      case (_:CConfig,p) => true
-      case _ => false
-    }.asInstanceOf[Iterable[(CConfig, CConfig)]] //Ugly cast, workaround?
+    (mkParentMap(k) collect {
+      case x@(_:CConfig,_) => x
+    }).asInstanceOf[Map[CConfig, CConfig]]
 
   /**
    * A map from any feature (config, menu and choices) to its closest Config.

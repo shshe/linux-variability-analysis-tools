@@ -1,6 +1,7 @@
 package gsd.linux.stats
 import gsd.linux._
 import java.io.PrintStream
+import com.sun.xml.internal.ws.developer.MemberSubmissionAddressing.Validation
 
 class ASEStatistics(val ck: ConcreteKConfig)
   extends FeatureStatistics(ck) with VisibilityStatistics {
@@ -28,11 +29,11 @@ object ASEStatistics {
   /**
    * Removes a conjunction from the condition of a property
    */
-  def removeCondition[A <: Property](p: A, conj: KExpr): KExpr = {
+  def removeCondition(propCond: KExpr, conj: KExpr): KExpr = {
     val cj = conj.splitConjunctions
-    p.cond.splitConjunctions filterNot
-      { cj contains } filterNot
-      { _ == Yes } mkConjunction
+    propCond.splitConjunctions filterNot
+      { cj contains } filter
+      { _ != Yes } mkConjunction
   }
 
   def rewriteProperties(ck: ConcreteKConfig)(f: (CConfig, Property) => KExpr)
@@ -64,7 +65,7 @@ object ASEStatistics {
    */
   def removeInherited(ck: ConcreteKConfig): ConcreteKConfig =
     rewriteProperties(ck){ (config, p) =>
-      removeCondition(p, config.inherited)
+      removeCondition(p.cond, config.inherited)
     }
 
   /**
@@ -72,13 +73,10 @@ object ASEStatistics {
    */
   def removeDependsOn(ck: ConcreteKConfig): ConcreteKConfig =
     rewriteProperties(ck){ (config, p) =>
-      removeCondition(p, config.depends map { _.cond } mkConjunction)
+      (p.cond /: config.depends){ (pcond, dep) => removeCondition(pcond, dep.cond) }
     }
 
   def removeInheritedAndDependsOn(ck: ConcreteKConfig): ConcreteKConfig =
-    rewriteProperties(ck){ (config, p) =>
-      removeCondition(p, (config.depends map { _.cond } mkConjunction) && config.inherited)
-    }
-
+  removeDependsOn(removeInherited(ck))
 
 }

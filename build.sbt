@@ -19,8 +19,5 @@ resolvers += "Local Maven Repository" at Path.userHome.asURL + "/.m2/repository"
 // only show 10 lines of stack traces
 traceLevel := 10
 
-// only show stack traces up to the first sbt stack frame
-traceLevel := 0
-
 javaOptions += "-Xss8192k -Xmx2048m"
 

@@ -24,6 +24,7 @@ import util.parsing.input.{PagedSeqReader, Reader}
 import collection.immutable.PagedSeq
 
 import TypeFilterList._
+import java.io.{InputStreamReader, InputStream}
 
 /**
  * A parser for the Kconfig extract file (.exconfig).
@@ -149,8 +150,8 @@ class ExconfigParser extends KExprParser with ImplicitConversions {
                   children)
       }
 
-  def parseKConfig(stream: java.io.Reader): ConcreteKConfig =
-    succ(parseAll(kconfig, stream))
+  def parseKConfigStream(stream: InputStream): ConcreteKConfig =
+    succ(parseAll(kconfig, new InputStreamReader(stream)))
 
   def parseKConfig(str: String): ConcreteKConfig =
     succ(parseAll(kconfig, str))

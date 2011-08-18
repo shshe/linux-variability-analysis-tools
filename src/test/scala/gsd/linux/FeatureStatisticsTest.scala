@@ -22,15 +22,33 @@ package gsd.linux
 
 import org.junit.Test
 import stats.FeatureStatistics
+import org.scalatest.junit.AssertionsForJUnit
 
-class FeatureStatisticsTest {
+class FeatureStatisticsTest extends AssertionsForJUnit {
 
-  @Test def testMutexGroup {
-    val ck =
-      ConcreteKConfig(CMenu(0, Prompt("Top Level Menu"),
-        List(CChoice(1, Prompt("Test Choice"), true, false))))
+  def mkConcreteKConfig(children: CSymbol*) =
+    ConcreteKConfig(CMenu(0, Prompt("Top Level Menu"), children.toList))
 
-    val stats = new FeatureStatistics(ck)
-    assert(stats.mutexGroups === 1)
+  def testStatistics(ck: ConcreteKConfig)(f: FeatureStatistics => Unit) =
+    f(new FeatureStatistics(ck))
+
+
+  @Test def testGroups {
+    val stats1 = new FeatureStatistics(
+      mkConcreteKConfig(CChoice(1, Prompt("Mutex"), true, false),
+        CChoice(2, Prompt("Or"), false, true)))
+    assert(stats1.mutexGroups.size === 1)
+    assert(stats1.orGroups.size === 1)
+    assert(stats1.xorGroups.size === 0)
+    assert(stats1.optGroups.size === 0)
+
+    val stats2 = new FeatureStatistics(
+      mkConcreteKConfig(CChoice(1, Prompt("Xor"), true, true),
+        CChoice(2, Prompt("Xor"), true, true)))
+    assert(stats2.mutexGroups.size === 0)
+    assert(stats2.orGroups.size === 0)
+    assert(stats2.xorGroups.size === 2)
+    assert(stats2.optGroups.size === 0)
   }
+
 }

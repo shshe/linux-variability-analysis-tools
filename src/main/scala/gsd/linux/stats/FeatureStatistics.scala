@@ -73,16 +73,15 @@ class FeatureStatistics(val k: ConcreteKConfig) {
   lazy val groupedBool = grouped.filter { _.ktype == KBoolType }
   lazy val groupedTri  = grouped.filter { _.ktype == KTriType }
 
-  lazy val xorGroups = choices.filter { _.isBool }
-  lazy val orGroups = choices.filter { !_.isBool }
+  lazy val xorGroups = choices.filter { c => c.isBool && c.isMand }
+  lazy val orGroups = choices.filter { c => !c.isBool && c.isMand }
   lazy val mutexGroups = choices.filter { c => c.isBool && !c.isMand }
+  lazy val optGroups = choices.filter { c => !c.isBool && !c.isMand } // for completeness
 
-  lazy val mandMenus = menus.filter { _.prompt.cond != Yes }
-  
   lazy val leafDepthMap : Map[CConfig, Int] = {
     def addChildren(depth: Int)(elem: CSymbol) : List[(CConfig,Int)] = elem match {
       case c: CConfig if c.children.isEmpty =>
-        (c, depth) :: elem.children.flatMap { addChildren(depth+1) }
+        List((c, depth))
       case x if x.isVirtual =>
         elem.children.flatMap { addChildren(depth) }
       case _ =>
