@@ -64,6 +64,19 @@ case class Eq (l: IdOrValue, r: IdOrValue) extends BinaryOp(l, r, "=")
 case class NEq(l: IdOrValue, r: IdOrValue) extends BinaryOp(l, r, "!=")
 case class Not(e: KExpr) extends UnaryOp(e, "!")
 
+// A virtual expression used for the boolean translation. A group
+// represents a sub-expression that can be used to introduce a
+// generated variable to represent.
+case class Group(id: Int, e: KExpr) extends KExpr(List(e)) {
+  override def toString = "[" + e + "]"
+}
+
+// Needs a better name
+// The Eq operator as defined in Kconfig only allows IdOrValues as
+// it's arguments. This equals operator is more general and is used
+// in the AbstractSyntax to represent an equality between two KExpr.
+case class NonCanonEq(l: KExpr, r: KExpr) extends BinaryOp(l, r, "===")
+
 sealed abstract class IdOrValue extends KExpr(Nil) {
   def eq(other: IdOrValue): KExpr = Eq(this, other)
 }

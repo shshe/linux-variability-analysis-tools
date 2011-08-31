@@ -110,14 +110,26 @@ sealed abstract class ASymbol
 
 /* ~~~~~~~~~~~~~~~
  * Abstract Syntax
+ * - Properties are expanded such that order doesn't matter
+ * - Prompt condition are combined through disjunction
+ * - Selects are converted to reverse-dependencies
  * ~~~~~~~~~~~~~~~ */
-case class AConfig(name: String, ktype: KType, vis: KExpr, pro: KExpr,
-                   defs: List[Default], rev: List[KExpr], ranges: List[Range])
+case class AConfig(name: String,
+                   ktype: KType,
+                   inherited: KExpr, // Defines the upper-bound for this config
+                   pro: KExpr,
+                   defs: List[ADefault],
+                   rev: List[KExpr], // A disjunction of conditions, the lower-bound
+                   ranges: List[Range])
         extends ASymbol
 
 case class AChoice(vis: KExpr, isBool: Boolean, isMand: Boolean,
                    memIds: List[String])
         extends ASymbol
+
+case class ADefault(iv: KExpr,
+                    prevConditions: List[KExpr],
+                    currCondition: KExpr)
 
 /* ~~~~~~~~~~~~~~~
  * Concrete Syntax

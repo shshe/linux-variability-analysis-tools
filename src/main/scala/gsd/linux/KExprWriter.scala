@@ -57,7 +57,9 @@ trait KExprWriter {
       case Or (l,r) => "(" :: l.toDocument :: " || " :: r.toDocument :: text(")")
       case Eq (l,r) => "(" :: l.toDocument :: " = "  :: r.toDocument :: text(")")
       case NEq(l,r) => "(" :: l.toDocument :: " != " :: r.toDocument :: text(")")
+      case NonCanonEq(l,r) => "(" :: l.toDocument :: " === " :: r.toDocument :: text(")")
       case Not(e)   => "!" :: e.toDocument
+      case Group(id, e) => "[" :: text(id.toString) :: "-" :: e.toDocument :: text("]")
       case Literal(value) => "\"" :: text(value) :: text("\"")
       case Id(id) => text(id)
       case KInt(v) => text("" + v)

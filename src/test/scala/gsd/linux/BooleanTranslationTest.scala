@@ -46,10 +46,10 @@ class BooleanTranslationTest extends AssertionsForJUnit {
   }
 
   @Test def testIsTooConstrainingDefault {
-    assert(isTooConstraining(Default("A", Eq("B", "C"))))
-    assert(isTooConstraining(Default("A", NEq("C", "F") || "G")))    
-    assert(isTooConstraining(Default(Eq("A","B"), "C")))
-    assert(!isTooConstraining(Default("A", "B" || "C")))
+    assert(isTooConstraining(ADefault("A", Nil, Eq("B", "C"))))
+    assert(isTooConstraining(ADefault("A", Nil, NEq("C", "F") || "G")))
+    assert(isTooConstraining(ADefault(Eq("A","B"), Nil, "C")))
+    assert(!isTooConstraining(ADefault("A", Nil, "B" || "C")))
   }
 
 }
