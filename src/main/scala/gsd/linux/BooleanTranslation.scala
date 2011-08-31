@@ -31,6 +31,9 @@ import org.kiama.rewriting.Rewriter._
  * formula. However, the inverse is not true; Some formulas that are satisfiable
  * with the generated formula may not be a valid configuration.
  *
+ * TODO this should be replaced by TristateSTrnaslation in the fm-translation project.
+ * TODO inherited expression is not used
+ *
  * @author Steven She (shshe@gsd.uwaterloo.ca)
  */
 object BooleanTranslation extends KExprList with BExprList with ExprRewriter {
@@ -78,22 +81,24 @@ object BooleanTranslation extends KExprList with BExprList with ExprRewriter {
    * current default being processed, the 0 to i-1 elements are the previous
    * default conditions. Negate all previous default conditions and conjoin it
    * with the current default condition.
+   *
+   * TODO currently ignoring previous expressions on ADefault
    */
-  def mkDefaults(defs: List[Default]): List[BExpr] = {
+  def mkDefaults(defs: List[ADefault]): List[BExpr] = {
 
     /**
      * Chunks defaults such that each list of defaults has the same consecutive
      * default values (ie. Default.iv)
      */
-    def chunkDefaults(defs: List[Default]): List[List[Default]] = defs match {
+    def chunkDefaults(defs: List[ADefault]): List[List[ADefault]] = defs match {
       case Nil => Nil
-      case Default(iv, _) :: _ =>
+      case ADefault(iv, _, _) :: _ =>
         val (same, rest) = defs.partition {_.iv == iv}
         same :: chunkDefaults(rest)
     }
 
-    def negateDefaults(prevs: List[Default]) =
-      ((BTrue: BExpr) /: prevs) {(x, y) => x & !toBExpr(y.cond)}
+    def negateDefaults(prevs: List[ADefault]) =
+      ((BTrue: BExpr) /: prevs) {(x, y) => x & !toBExpr(y.currCondition)}
 
     /**
      * Chunk defaults and reverse such that the last default chunk is first.
@@ -104,22 +109,22 @@ object BooleanTranslation extends KExprList with BExprList with ExprRewriter {
      * process Z first, with [Y,X] as the tail. Z is the last default, and thus,
      * must negate Y and X.
      */
-    def doChunks(prevs: List[List[Default]])(acc: List[BExpr]): List[BExpr] =
+    def doChunks(prevs: List[List[ADefault]])(acc: List[BExpr]): List[BExpr] =
       prevs match {
         case Nil => acc
         case lst :: rest =>
-          val negatedPrev = negateDefaults(rest.flatten[Default])
+          val negatedPrev = negateDefaults(rest.flatten[ADefault])
           doChunks(rest) {
 
             //Remove defaults with value 'No' or Literal("")
             {
               lst filterNot
-                { case Default(iv, _) => iv == No | iv == Literal("") } map 
+                { case ADefault(iv, _, _) => iv == No | iv == Literal("") } map
                 {
-                  case Default(Yes, c) => negatedPrev & toBExpr(c)
-                  case Default(Mod, c) => negatedPrev & toBExpr(c)
-                  case Default(v: Value, c)   => negatedPrev & toBExpr(c)
-                  case Default(iv, c) => negatedPrev & toBExpr(c && iv)
+                  case ADefault(Yes, _, c) => negatedPrev & toBExpr(c)
+                  case ADefault(Mod, _, c) => negatedPrev & toBExpr(c)
+                  case ADefault(v: Value, _, c)   => negatedPrev & toBExpr(c)
+                  case ADefault(iv, _, c) => negatedPrev & toBExpr(c && iv)
                 }
             } ++ acc
           }
@@ -135,8 +140,8 @@ object BooleanTranslation extends KExprList with BExprList with ExprRewriter {
   def isTooConstraining(e: KExpr): Boolean =
     count { case _ : Eq | _ : NEq => 1}(e) > 0
 
-  def isTooConstraining(d: Default): Boolean =
-    isTooConstraining(d.iv) || isTooConstraining(d.cond)
+  def isTooConstraining(d: ADefault): Boolean =
+    isTooConstraining(d.iv) || isTooConstraining(d.currCondition)
 
 
   def mkPresence(k: AbstractKConfig): BTrans = {
@@ -172,7 +177,7 @@ object BooleanTranslation extends KExprList with BExprList with ExprRewriter {
      *
      */
     val exprs = k.configs.flatMap {
-      case AConfig(id, _, _, pro, defs, krevs, _) =>
+      case AConfig(id, _, inh, pro, defs, krevs, _) =>
         val proE   = toBExpr(pro)
 
         //Reverse dependency and defaults
@@ -196,10 +201,6 @@ object BooleanTranslation extends KExprList with BExprList with ExprRewriter {
   }
 
 
-  def mkInherited(k: AbstractKConfig): List[BExpr] = k.configs.map {
-    case AConfig(id, t, vis, pro, defs, rev, rngs) => BId(id) implies toBExpr(vis)
-  }
-
   def mkChoice(k: AbstractKConfig): List[BExpr] = k.choices.flatMap {
     case AChoice(vis, isBool, isMand, memIds) =>
       val xors = Combinations.choose(2, memIds).map {
@@ -219,7 +220,7 @@ object BooleanTranslation extends KExprList with BExprList with ExprRewriter {
    */
   def mkBooleanTranslation(k: AbstractKConfig) : BTrans = {
     val pres = mkPresence(k)
-    BTrans(pres.exprs ::: mkInherited(k) ::: mkChoice(k), pres.genVars)
+    BTrans(pres.exprs ::: mkChoice(k), pres.genVars)
   }
 }
 

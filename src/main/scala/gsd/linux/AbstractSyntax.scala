@@ -19,10 +19,10 @@
  */
 package gsd.linux
 
-import org.kiama.rewriting.Rewriter._
 import collection.mutable.{MultiMap, HashMap}
 
 import TypeFilterList._
+import org.kiama.rewriting.Rewriter
 
 /**
  * @author Steven She (shshe@gsd.uwaterloo.ca)
@@ -63,8 +63,8 @@ object AbstractSyntax {
     lazy val revMap : Map[String, Set[KExpr]] = {
       val mutMap = new HashMap[String, collection.mutable.Set[KExpr]]
               with MultiMap[String, KExpr]
-      everywheretd {
-        query {
+      Rewriter.everywheretd {
+        Rewriter.query {
           case CConfig(_,name,_,_,_,_,_,sels,_,_,_) =>
             sels.map { case Select(n,e) => (n, Id(name) && e) }.foreach {
               case (k,v) => mutMap addBinding (k,v)
@@ -81,16 +81,31 @@ object AbstractSyntax {
      */
     def rev(n: String) = revMap(n).toList
 
+    /**
+     * Defaults operate such that the first default that is 'active'(e.g.
+     * has a value of 'm' or 'y') takes effect.
+     */
+    def toADefaults(defs: List[Default]): List[ADefault] = {
+
+      def t(prev: List[KExpr], next: List[Default]): List[ADefault] = next match {
+        case Nil => Nil
+        case Default(value, cond) :: tail =>
+          ADefault(value, prev, cond) :: t(cond::prev, tail)
+      }
+
+      t(Nil, defs)
+    }
+
 
     lazy val toAbstractSyntax : AbstractKConfig = {
 
-      val configs = collectl {
+      val configs = Rewriter.collectl {
         case CConfig(_,name,_,t,inh,ps,defs,_,rngs,_,_) =>
           val pro = ((No: KExpr) /: ps){ _ || _.cond }
-          AConfig(name,t,inh,pro,addBaseDefault(t, defs),rev(name),rngs)
+          AConfig(name, t, inh, pro, toADefaults(addBaseDefault(t, defs)), rev(name), rngs)
       }(k)
 
-      val choices = collectl {
+      val choices = Rewriter.collectl {
         case c: CChoice => mkAChoice(c)
       }(k)
 

@@ -37,7 +37,7 @@ class KConfigTest extends AssertionsForJUnit {
     val ck = ASEStatistics.removeInherited(KConfigParser.parseKConfig(in))
     val ak = ck.toAbstractKConfig
     expect(Yes)(ak.findConfig("IFUPDOWN_UDHCPC_CMD_OPTIONS").get.pro)
-    assert(ak.findConfig("IFUPDOWN_UDHCPC_CMD_OPTIONS").get.defs forall { _.cond == Yes})
+    assert(ak.findConfig("IFUPDOWN_UDHCPC_CMD_OPTIONS").get.defs forall { _.currCondition == Yes})
   }
 
   @Test
