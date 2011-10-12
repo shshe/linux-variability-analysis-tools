@@ -67,6 +67,15 @@ class TSEStatistics(val ck: ConcreteKConfig) {
       c.prompt.isEmpty || (c.prompt forall { p => p.cond == No })
     }
 
+  // end partition
+
+  val derivedConfigsUsingLiterals: List[CConfig] =
+    derivedConfigs filter { c =>
+      c.defs exists { case Default(iv,_) => iv.isInstanceOf[Value] }
+    }
+
+  val derivedConfigsUsingExpressions: List[CConfig] =
+    derivedConfigs -- derivedConfigsUsingLiterals
 
   // S12 Number of features with explicit defaults
   val explicitDefaultConfigs: List[CConfig] =
@@ -74,13 +83,16 @@ class TSEStatistics(val ck: ConcreteKConfig) {
       !(c.defs filter { _.cond != No } isEmpty)
     }
 
+  // S13a
   val explicitDefaultConfigsUsingLiterals: List[CConfig] =
     explicitDefaultConfigs filter { c =>
       c.defs exists { case Default(iv,_) => iv.isInstanceOf[Value] }
     }
 
+  // S13b
   val explicitDefaultConfigsUsingExpressions: List[CConfig] =
     explicitDefaultConfigs -- explicitDefaultConfigsUsingLiterals
+
 
 }
 
@@ -103,6 +115,8 @@ object TSEStatistics {
     println("Always visible configs: " + stats.alwaysVisibleConfigs.size)
     println("Conditionally derived configs: " + stats.conditionallyDerivedConfigs.size)
     println("Derived configs: " + stats.derivedConfigs.size)
+    println("   using literals: " + stats.derivedConfigsUsingLiterals.size)
+    println("   using expressions: " + stats.derivedConfigsUsingExpressions.size)
 
     println
 
@@ -111,7 +125,8 @@ object TSEStatistics {
     println("   using expressions: " + stats.explicitDefaultConfigsUsingExpressions.size)
 
     println
-    stats.explicitDefaultConfigsUsingExpressions foreach { c => c.defs foreach { d=> println(c.name + " " + d) } }
+    stats.derivedConfigsUsingExpressions foreach { c => c.defs foreach { d => println(c.name + ":" + d )}}
+
 
   }
 
