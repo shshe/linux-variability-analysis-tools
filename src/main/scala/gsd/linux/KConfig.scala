@@ -77,7 +77,7 @@ case class ConcreteKConfig(root: CMenu) {
     AbstractSyntax.toAbstractSyntaxBuilder(this).toAbstractSyntax
 }
 
-case class AbstractKConfig(configs: List[AConfig], choices: List[AChoice]) {
+case class AbstractKConfig(configs: List[AConfig] = Nil, choices: List[AChoice] = Nil) {
 
   lazy val identifiers: Set[String] =
     collects {
@@ -115,15 +115,17 @@ sealed abstract class ASymbol
  * - Selects are converted to reverse-dependencies
  * ~~~~~~~~~~~~~~~ */
 case class AConfig(name: String,
-                   ktype: KType,
-                   inherited: KExpr, // Defines the upper-bound for this config
-                   pro: KExpr,
-                   defs: List[ADefault],
-                   rev: List[KExpr], // A disjunction of conditions, the lower-bound
-                   ranges: List[Range])
+                   ktype: KType = KBoolType,
+                   inherited: KExpr = Yes, // Defines the upper-bound for this config
+                   pro: KExpr = Yes,
+                   defs: List[ADefault] = Nil,
+                   rev: List[KExpr] = Nil, // A disjunction of conditions, the lower-bound
+                   ranges: List[Range] = Nil)
         extends ASymbol
 
-case class AChoice(vis: KExpr, isBool: Boolean, isMand: Boolean,
+case class AChoice(vis: KExpr = Yes,
+                   isBool: Boolean,
+                   isMand: Boolean,
                    memIds: List[String])
         extends ASymbol
 

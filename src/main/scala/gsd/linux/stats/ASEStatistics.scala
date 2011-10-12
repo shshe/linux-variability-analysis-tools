@@ -26,6 +26,26 @@ object ASEStatistics {
   import KExprList._
   import org.kiama.rewriting.Rewriter._
 
+  def fixHexIdentifiers(ck: ConcreteKConfig): ConcreteKConfig = {
+
+    def isHex(s: String) =
+      try {
+        Integer.parseInt(s, 16)
+        true
+      }
+      catch {
+        case _ => false
+      }
+
+    lazy val fixHex =
+      rule {
+        case Id(x) if isHex(x) && !ck.configMap.contains(x) =>
+          KInt(Integer.parseInt(x, 16))
+      }
+
+    rewrite(everywheretd(fixHex))(ck)
+  }
+
   /**
    * Removes a conjunction from the condition of a property
    */
