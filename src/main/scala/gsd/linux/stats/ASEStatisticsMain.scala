@@ -32,6 +32,11 @@ object ASEStatisticsMain {
     out.println("XOR:          " + stats.xorGroups.size)
     out.println("OR:           " + stats.orGroups.size)
     out.println("MUTEX:        " + stats.mutexGroups.size)
+    out.println("OPT:          " + stats.optGroups.size)
+
+    out.println
+    out.println("Optional Groups:")
+    stats.optGroups foreach { g => println(g.prompt.text) }
   }
 
   def dependencyStats(stats: ASEStatistics)(out: PrintStream) {
