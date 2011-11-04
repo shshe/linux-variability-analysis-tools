@@ -151,7 +151,7 @@ class ExconfigParser extends KExprParser with ImplicitConversions {
       }
 
   def parseKConfigStream(stream: InputStream): ConcreteKConfig =
-    succ(parseAll(kconfig, new InputStreamReader(stream)))
+    succ(parseAll(kconfig, new PagedSeqReader(PagedSeq fromReader new InputStreamReader(stream))))
 
   def parseKConfig(str: String): ConcreteKConfig =
     succ(parseAll(kconfig, str))

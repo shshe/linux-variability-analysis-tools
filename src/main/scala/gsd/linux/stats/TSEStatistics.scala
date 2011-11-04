@@ -71,27 +71,27 @@ class TSEStatistics(val ck: ConcreteKConfig) {
 
   val derivedConfigsUsingLiterals: List[CConfig] =
     derivedConfigs filter { c =>
-      c.defs exists { case Default(iv,_) => iv.isInstanceOf[Value] }
+      c.defs forall { case Default(iv,_) => iv.isInstanceOf[Value] }
     }
 
   val derivedConfigsUsingExpressions: List[CConfig] =
-    derivedConfigs -- derivedConfigsUsingLiterals
+    derivedConfigs filterNot (derivedConfigsUsingLiterals contains)
 
   // S12 Number of features with explicit defaults
   val explicitDefaultConfigs: List[CConfig] =
     alwaysVisibleConfigs filter { c =>
-      !(c.defs filter { _.cond != No } isEmpty)
+      c.defs exists { _.cond != No }
     }
 
   // S13a
   val explicitDefaultConfigsUsingLiterals: List[CConfig] =
     explicitDefaultConfigs filter { c =>
-      c.defs exists { case Default(iv,_) => iv.isInstanceOf[Value] }
+      c.defs forall { case Default(iv,_) => iv.isInstanceOf[Value] }
     }
 
   // S13b
   val explicitDefaultConfigsUsingExpressions: List[CConfig] =
-    explicitDefaultConfigs -- explicitDefaultConfigsUsingLiterals
+    explicitDefaultConfigs filterNot (explicitDefaultConfigsUsingLiterals contains)
 
 
 }
@@ -105,6 +105,10 @@ object TSEStatistics {
     println("Parsing Kconfig...")
     val linux = KConfigParser.parseKConfigFile(args(0))
     val stats = new TSEStatistics(linux)
+
+    println("Total number of configs: " + linux.allConfigs.size)
+    println("Total number of choices: " + linux.choices.size)
+    println("Total number of menus  : " + linux.menus.size)
 
     println("Configs with Explicit Visibility Conditions: " + stats.configsWithExplicitVisibilityConditions.size + " / " + stats.ck.allConfigs.size)
     println("Menus with Explicit Visibility Conditions (NOTE, not post-processed): " + stats.menusWithExplicitVisibilityConditions.size + " / " + stats.ck.menus.size)
@@ -123,10 +127,6 @@ object TSEStatistics {
     println("Explicit default configs: " + stats.explicitDefaultConfigs.size)
     println("   using literals: " + stats.explicitDefaultConfigsUsingLiterals.size)
     println("   using expressions: " + stats.explicitDefaultConfigsUsingExpressions.size)
-
-    println
-    stats.derivedConfigsUsingExpressions foreach { c => c.defs foreach { d => println(c.name + ":" + d )}}
-
 
   }
 
