@@ -25,6 +25,7 @@ import collection.immutable.PagedSeq
 
 import TypeFilterList._
 import java.io.{InputStreamReader, InputStream}
+import org.kiama.rewriting.Rewriter
 
 /**
  * A parser for the Kconfig extract file (.exconfig).
@@ -33,17 +34,11 @@ import java.io.{InputStreamReader, InputStream}
  */
 class ExconfigParser extends KExprParser with ImplicitConversions {
 
-  var i = 0
-  def nextId = {
-    i += 1
-    i
-  }
-
   //Adds support to @{link stringLiteral} for escaping quotes
   private lazy val strLiteral =
     ("\""+"""([^"\p{Cntrl}\\]|\\[\\/bfnrt"])*"""+"\"").r ^^
       {
-        s => s.substring(1, s.length - 1)
+        s => s.substring(1, s.length - 1).replaceAll("\\\\\"","\"")
       }
 
   private lazy val kType: PackratParser[KType] =
@@ -87,23 +82,29 @@ class ExconfigParser extends KExprParser with ImplicitConversions {
     rep(prompt | depends | default | range | select | env)
 
   private lazy val kconfig: PackratParser[ConcreteKConfig] =
-    syms ^^ { c => ConcreteKConfig(CMenu(nextId, Prompt(KConfigParser.rootId,Yes), c)) }
+    syms ^^ { c => ConcreteKConfig(addNodeIds(CMenu(-1, Prompt(KConfigParser.rootId,Yes), c))) }
 
   private lazy val syms: PackratParser[List[CSymbol]] =
-    rep(menu | config |choice | ifSym)
+    rep(menu | config | choice | ifSym | comment)
 
   private lazy val ifSym: PackratParser[CIf] =
   "if" ~> exExpr ~ ("{" ~> syms <~ "}") ^^
     {
       case expr~cs =>
-        CIf(nextId, expr, cs)
+        CIf(-1, expr, cs)
     }
 
   private lazy val menu =
     "menu" ~> strLiteral ~ ("{" ~> (opt(depends) ^^ { _.getOrElse(DependsOn(Yes)) })) ~ syms <~ "}" ^^
       {
         case name~DependsOn(cond)~children =>
-          CMenu(nextId, Prompt(name, cond), children)
+          CMenu(-1, Prompt(name, cond), children)
+      }
+
+  private lazy val comment =
+    "comment" ~> strLiteral ~ ("{" ~> (opt(depends) ^^ (_.getOrElse(DependsOn(Yes)))) <~ "}") ^^
+      {
+        case text~DependsOn(cond) => CComment(-1, text, cond)
       }
 
   private lazy val choice =
@@ -113,7 +114,7 @@ class ExconfigParser extends KExprParser with ImplicitConversions {
         {
           case isBool~isMand~props~cs =>
             val properties = mkProperties(props)
-            CChoice(nextId, properties.prompts.head, isBool, isMand, properties.defaults, cs)
+            CChoice(-1, properties.prompts.head, isBool, isMand, properties.defaults, cs)
         }
 
   private def mkProperties(props: List[Any]): Properties =
@@ -140,7 +141,7 @@ class ExconfigParser extends KExprParser with ImplicitConversions {
           val (p, inheritedExpr) =
               (mkProperties(props), inh getOrElse Yes)
 
-          CConfig(nextId, name, isMenuConfig, t,
+          CConfig(-1, name, isMenuConfig, t,
                   inheritedExpr,
                   p.prompts,
                   p.defaults,
@@ -149,6 +150,25 @@ class ExconfigParser extends KExprParser with ImplicitConversions {
                   p.dependsOn,
                   children)
       }
+
+  def addNodeIds(root: CMenu): CMenu = {
+    import Rewriter._
+    var i = 0
+    def nextId = {
+      i += 1
+      i
+    }
+    rewrite {
+      everywheretd {
+        rule {
+          case s: CMenu => s.copy(nId = nextId)
+          case s: CConfig => s.copy(nId = nextId)
+          case s: CChoice => s.copy(nId = nextId)
+          case s: CComment => s.copy(nId = nextId)
+        }
+      }
+    }(root)
+  }
 
   def parseKConfigStream(stream: InputStream): ConcreteKConfig =
     succ(parseAll(kconfig, new PagedSeqReader(PagedSeq fromReader new InputStreamReader(stream))))
