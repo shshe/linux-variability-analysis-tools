@@ -105,7 +105,9 @@ object AbstractKConfig {
 sealed abstract class CSymbol(val nodeId: Int, // The unique node identifier
                               val properties: List[Property],
                               val isVirtual: Boolean, // Whether the node is a real symbol or not (i.e. if node)
-                              val children: List[CSymbol])
+                              val children: List[CSymbol]) {
+  def prettyString: String
+}
 sealed abstract class ASymbol
 
 /* ~~~~~~~~~~~~~~~
@@ -148,12 +150,16 @@ case class CConfig(nId: Int,
                    ranges: List[Range] = Nil,
                    depends: List[DependsOn] = Nil,
                    cs: List[CSymbol] = Nil)
-        extends CSymbol(nId, prompt.toList ::: defs ::: sels ::: ranges, false, cs)
+        extends CSymbol(nId, prompt.toList ::: defs ::: sels ::: ranges, false, cs) {
+  override def prettyString = name
+}
 
 case class CMenu(nId: Int,
                  prompt: Prompt,
                  cs: List[CSymbol] = Nil)
-        extends CSymbol(nId, List(prompt), false, cs)
+        extends CSymbol(nId, List(prompt), false, cs) {
+  override def prettyString = prompt.text
+}
 
 case class CChoice(nId: Int,
                    prompt: Prompt,
@@ -161,11 +167,17 @@ case class CChoice(nId: Int,
                    isMand: Boolean,
                    defs: List[Default] = Nil,
                    cs: List[CConfig] = Nil)
-        extends CSymbol(nId, prompt :: defs, false, cs)
+        extends CSymbol(nId, prompt :: defs, false, cs) {
+  override def prettyString = prompt.text
+}
 
-case class CIf(nId: Int, condition: KExpr, cs: List[CSymbol] = Nil) extends CSymbol(nId, Nil, true, cs)
+case class CIf(nId: Int, condition: KExpr, cs: List[CSymbol] = Nil) extends CSymbol(nId, Nil, true, cs) {
+  override def prettyString = "If " + condition
+}
 
-case class CComment(nId: Int, text: String, condition: KExpr) extends CSymbol(nId, Nil, true, Nil)
+case class CComment(nId: Int, text: String, condition: KExpr) extends CSymbol(nId, Nil, true, Nil) {
+  override def prettyString = text
+}
 
 sealed abstract class Property(val cond: KExpr)
 case class Prompt(text: String, c: KExpr = Yes) extends Property(c)
