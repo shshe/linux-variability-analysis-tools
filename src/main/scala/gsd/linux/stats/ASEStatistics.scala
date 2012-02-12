@@ -61,7 +61,7 @@ object ASEStatistics {
     val strategy =
       everywheretd {
         rule {
-          case config@CConfig(_,_,_,_,inh,pros,ds,selects,rngs,_,_) =>
+          case config@CConfig(_,_,_,_,inh,pros,ds,selects,rngs,env,_,_) =>
             config.copy (
               prompt = pros map
                 { p => p.copy( c = f(config, p) ) },
@@ -73,7 +73,10 @@ object ASEStatistics {
                 { s => s.copy( c = f(config, s) ) },
 
               ranges = rngs map
-                { r => r.copy( c = f(config, r) ) }
+                { r => r.copy( c = f(config, r) ) },
+
+              env = env map
+                { e => e.copy( c = f(config, e) ) }
             )
         }
       }

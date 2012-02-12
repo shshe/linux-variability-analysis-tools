@@ -91,11 +91,11 @@ class FeatureStatistics(val k: ConcreteKConfig) {
   }
 
   lazy val branchingMap : Map[CSymbol,List[CSymbol]] =
-    features map { f => (f, f.children) } toMap
+    (features map { f => (f, f.children) }).toMap
 
   lazy val properties = collectl {
-    case CConfig(_,_,_,_,_,pro,defs,sels,rngs,_,_) =>
-      pro.toList ::: defs ::: sels ::: rngs
+    case CConfig(_,_,_,_,_,pro,defs,sels,rngs,env,_,_) =>
+      pro.toList ::: defs ::: sels ::: rngs ::: env
     case CMenu(_,pro,_) => pro
     case CChoice(_,pro,_,_,defs,_) => pro :: defs
   }(k)
@@ -104,7 +104,13 @@ class FeatureStatistics(val k: ConcreteKConfig) {
   lazy val prompts  = properties.typeFilter[Prompt]
   lazy val selects  = properties.typeFilter[Select]
   lazy val defaults = properties.typeFilter[Default]
+  lazy val envs = properties.typeFilter[Env]
 
-  
+  lazy val multipleDefinitions: Map[String, List[CConfig]] =
+    k.allConfigs groupBy (_.name) filter { case (k,vs) => vs.size > 1 }
+}
 
+object FeatureStatistics {
+  def apply(file: String) =
+    new FeatureStatistics(KConfigParser.parseKConfigFile(file))
 }

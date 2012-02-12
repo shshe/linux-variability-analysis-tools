@@ -177,7 +177,7 @@ object BooleanTranslation extends KExprList with BExprList with ExprRewriter {
      *
      */
     val exprs = k.configs.flatMap {
-      case AConfig(id, _, inh, pro, defs, krevs, _) =>
+      case AConfig(_,name, _, inh, pro, defs, krevs, _) =>
         val proE   = toBExpr(pro)
 
         //Reverse dependency and defaults
@@ -188,12 +188,12 @@ object BooleanTranslation extends KExprList with BExprList with ExprRewriter {
 
         //Heuristic for estimating size of resulting CNF translation
         if (numOfIds < 40 && asCons.size < 5)
-          (proE | (asAnte.mkDisjunction implies BId(id)) &
-                  (BId(id) implies asCons.mkDisjunction)) :: Nil
+          (proE | (asAnte.mkDisjunction implies BId(name)) &
+                  (BId(name) implies asCons.mkDisjunction)) :: Nil
         else {
           val equivs = asCons.map { e => cache(e) iff e }
-          (proE | (replaceWithVars(asAnte).mkDisjunction implies BId(id)) &
-                  (BId(id) implies replaceWithVars(asCons).mkDisjunction)) :: equivs
+          (proE | (replaceWithVars(asAnte).mkDisjunction implies BId(name)) &
+                  (BId(name) implies replaceWithVars(asCons).mkDisjunction)) :: equivs
         }
     }
 

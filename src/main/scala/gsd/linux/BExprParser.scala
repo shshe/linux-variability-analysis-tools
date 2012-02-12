@@ -3,7 +3,7 @@ package gsd.linux
 import util.parsing.combinator._
 import util.parsing.input.PagedSeqReader
 import collection.immutable.PagedSeq
-import java.io.InputStream
+import java.io.{PrintStream, InputStream}
 
 object BExprParser extends RegexParsers with PackratParsers with ImplicitConversions {
 
@@ -20,6 +20,20 @@ object BExprParser extends RegexParsers with PackratParsers with ImplicitConvers
 
     lazy val varMap: Map[Int, String] =
       (idMap map { case (id,v) => (v, id)}).toMap
+
+    def write(out: PrintStream) {
+      // Output identifiers
+      for (id <- ids)
+        out.println("@ " + id)
+
+      // Output generated variables
+      for (id <- generated)
+        out.println("$ " + id)
+
+      // Output expressions
+      for (e  <- expressions)
+        out.println(e)
+    }
   }
 
   private lazy val orExpr : PackratParser[BExpr] =

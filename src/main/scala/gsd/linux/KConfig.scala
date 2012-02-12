@@ -67,39 +67,67 @@ case class ConcreteKConfig(root: CMenu) {
     case Id(n) => n
   }(root)
 
+  /**
+   * Note: Doesn't handle multiply defined configs
+   */
   lazy val configMap: Map[String, CConfig] =
     allConfigs map { c => c.name -> c } toMap
 
   lazy val nodeIdMap: Map[Int, CSymbol] =
-    features map { f => f.nodeId -> f } toMap
+    (features map { f => f.nodeId -> f }).toMap
 
-  def toAbstractKConfig =
-    AbstractSyntax.toAbstractSyntaxBuilder(this).toAbstractSyntax
+  lazy val undefinedConfigs: Set[String] =
+    identifiers -- (allConfigs map (_.name))
+
+  lazy val toAbstractKConfig =
+    new AbstractSyntax.AbstractSyntaxBuilder(this).toAbstractSyntax
 }
 
-case class AbstractKConfig(configs: List[AConfig] = Nil, choices: List[AChoice] = Nil) {
+case class AbstractKConfig(configs: List[AConfig] = Nil,
+                           choices: List[AChoice] = Nil,
+                           parentMap: Map[AConfig, AConfig] = Map(),
+                           env: List[String] = Nil) {
 
-  lazy val identifiers: Set[String] =
-    collects {
-      case c: AConfig => c.name
-      case Id(n) => n
-    }(configs ::: choices) 
+  lazy val identifiers =
+    AbstractKConfig.identifiers(configs ::: choices)
 
   lazy val idMap: Map[String, Int] =
-    Map() ++ (identifiers.toList.zipWithIndex map { case (id, i) => (id, i+1) })
-
-
+    (identifiers.toList.zipWithIndex map { case (name, i) => (name, i+1) }).toMap
+  
   /**
    * Helper function for finding a particular config, probably belongs elsewhere
    */
   def findConfig(findName: String): Option[AConfig] =
-    configs.find { case a: AConfig => a.name == findName }
+    configs find (_.name == findName)
+
+  def findAllConfigs(findName: String): List[AConfig] =
+    configs filter (_.name == findName)
+
+  /**
+   * Remove configs with the same name. Used to remove configs for the boolean
+   * tristate conversion since properties are currently duplicated across
+   * all configs with the same name.
+   */
+  def retainOnlyDistinctConfigs: AbstractKConfig = {
+    def _distinct(rest: List[AConfig]): List[AConfig] = rest match {
+      case Nil => Nil
+      case head::tail =>
+        head :: _distinct(tail dropWhile (_.name == head.name))
+    }
+    AbstractKConfig(_distinct(configs sortBy (_.name)), choices)
+  }
 }
 
-// FIXME what exactly is an abstract kconfig
 object AbstractKConfig {
   implicit def fromConcreteKConfig(k: ConcreteKConfig): AbstractKConfig =
     k.toAbstractKConfig
+
+  def identifiers(in: Term): Set[String] =
+    collects {
+      case c: AConfig => c.name
+      case Id(n) => n
+    }(in)
+
 }
 
 sealed abstract class CSymbol(val nodeId: Int, // The unique node identifier
@@ -116,7 +144,8 @@ sealed abstract class ASymbol
  * - Prompt condition are combined through disjunction
  * - Selects are converted to reverse-dependencies
  * ~~~~~~~~~~~~~~~ */
-case class AConfig(name: String,
+case class AConfig(nodeId: Int,
+                   name: String,
                    ktype: KType = KBoolType,
                    inherited: KExpr = Yes, // Defines the upper-bound for this config
                    pro: KExpr = Yes,
@@ -148,6 +177,7 @@ case class CConfig(nId: Int,
                    defs: List[Default] = Nil,
                    sels: List[Select] = Nil,
                    ranges: List[Range] = Nil,
+                   env: List[Env] = Nil,
                    depends: List[DependsOn] = Nil,
                    cs: List[CSymbol] = Nil)
         extends CSymbol(nId, prompt.toList ::: defs ::: sels ::: ranges, false, cs) {

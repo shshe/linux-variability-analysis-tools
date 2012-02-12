@@ -35,6 +35,7 @@ class ProtoParser extends KConfigParser {
                                 defaults: List[Default],
                                 selects: List[Select],
                                 ranges: List[Range],
+                                envs: List[Env],
                                 dependsOns: List[DependsOn])
 
   var i = 0
@@ -106,8 +107,9 @@ class ProtoParser extends KConfigParser {
         val selects = propList collect { case x: Select => x }
         val ranges = propList collect { case x: Range => x }
         val dependsOns = propList collect { case x: DependsOn => x }
+        val envs = propList collect { case x: Env => x }
 
-        Properties(prompts, defaults, selects, ranges, dependsOns)
+        Properties(prompts, defaults, selects, ranges, envs, dependsOns)
       }
 
       val properties = mkProperties(n.getPropertyList)
@@ -124,6 +126,7 @@ class ProtoParser extends KConfigParser {
             properties.defaults,
             properties.selects,
             properties.ranges,
+            properties.envs,
             properties.dependsOns,
             n.getChildList.toList map mkSymbol)
 

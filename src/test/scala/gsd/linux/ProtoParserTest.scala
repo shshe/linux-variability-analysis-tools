@@ -35,15 +35,18 @@ class ProtoParserTest extends AssertionsForJUnit {
     assert(k.configMap("C").defs.head.cond === Id("B"))
   }
 
-  @Test def busyboxExconfigCompare {
+  @Test def busyboxCompare {
     val exconfigf = URLDecoder.decode(getClass.getResource("../../busybox.exconfig").getFile, "UTF-8")
     val protof = URLDecoder.decode(getClass.getResource("../../busybox.pb").getFile, "UTF-8")
     val exconfig = (new ExconfigParser).parseKConfigFile(exconfigf)
     val protoconfig = (new ProtoParser).parseKConfigFile(protof)
 
+    def dfs(left: CSymbol, right: CSymbol)(f: (CSymbol, CSymbol) => Unit) {
+      (left.children zip right.children) foreach { case (l,r) => dfs(l,r)(f) }
+    }
+
     // First check the hierarchy
-    def dfs(left: CSymbol, right: CSymbol) {
-      assert(left.nodeId === right.nodeId, left.prettyString + " compare to " + right.prettyString)
+    dfs(exconfig.root, protoconfig.root){ (left, right) =>
       (left, right) match {
         case (l:CMenu, r:CMenu) =>
           assert(l.prompt.text === r.prompt.text)
@@ -56,15 +59,14 @@ class ProtoParserTest extends AssertionsForJUnit {
         case _ =>
           fail(left + " compared to " + right)
       }
-
+      assert(left.nodeId === right.nodeId, left.prettyString + " compare to " + right.prettyString)
       assert(left.children.size === right.children.size)
-      (left.children zip right.children) foreach { case (l,r) => dfs(l,r) }
     }
 
-    dfs(exconfig.root, protoconfig.root)
-
     // Check Properties
-
+    dfs(exconfig.root, protoconfig.root){ (left, right) =>
+      assert(left.properties.toSet === right.properties.toSet)
+    }
   }
 
 

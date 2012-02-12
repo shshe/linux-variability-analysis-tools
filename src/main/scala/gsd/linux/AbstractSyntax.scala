@@ -28,9 +28,7 @@ import org.kiama.rewriting.Rewriter
  * @author Steven She (shshe@gsd.uwaterloo.ca)
  */
 object AbstractSyntax {
-  implicit def toAbstractSyntaxBuilder(k: ConcreteKConfig) =
-    new AbstractSyntaxBuilder(k)
-  
+
   /**
    * Adds the base default to a list of defaults
    */
@@ -65,7 +63,7 @@ object AbstractSyntax {
               with MultiMap[String, KExpr]
       Rewriter.everywheretd {
         Rewriter.query {
-          case CConfig(_,name,_,_,_,_,_,sels,_,_,_) =>
+          case CConfig(_,name,_,_,_,_,_,sels,_,_,_,_) =>
             sels.map { case Select(n,e) => (n, Id(name) && e) }.foreach {
               case (k,v) => mutMap addBinding (k,v)
             }
@@ -99,17 +97,40 @@ object AbstractSyntax {
 
     lazy val toAbstractSyntax : AbstractKConfig = {
 
-      val configs = Rewriter.collectl {
-        case CConfig(_,name,_,t,inh,ps,defs,_,rngs,_,_) =>
+      val parentMap = new collection.mutable.HashMap[AConfig, AConfig]()
+      val envConfigs = new collection.mutable.ListBuffer[String]()
+      
+      def dfs(parent: Option[AConfig])(curr: CSymbol): List[AConfig] = curr match {
+        case CConfig(id,name,_,t,inh,ps,defs,_,rngs,envs,_,children) =>
           val pro = ((No: KExpr) /: ps){ _ || _.cond }
-          AConfig(name, t, inh, pro, toADefaults(addBaseDefault(t, defs)), rev(name), rngs)
-      }(k)
+          val ac = AConfig(id,name, t, inh, pro, toADefaults(addBaseDefault(t, defs)), rev(name), rngs)
+
+          // parent map
+          if (parent.isDefined)
+            parentMap += parent.get -> ac
+
+          if (!envs.isEmpty)
+            envConfigs += name
+
+          ac :: (children flatMap dfs(Some(ac)))
+          
+        case x => 
+          x.children flatMap dfs(parent)
+      }
+      
+      val configs = dfs(None)(k.root)
+      
+//      val configs = Rewriter.collectl {
+//        case CConfig(id,name,_,t,inh,ps,defs,_,rngs,_,_) =>
+//          val pro = ((No: KExpr) /: ps){ _ || _.cond }
+//          AConfig(id,name, t, inh, pro, toADefaults(addBaseDefault(t, defs)), rev(name), rngs)
+//      }(k)
 
       val choices = Rewriter.collectl {
         case c: CChoice => mkAChoice(c)
       }(k)
-
-      AbstractKConfig(configs, choices)
+      
+      AbstractKConfig(configs, choices, parentMap.toMap, envConfigs.toList)
     }
   }
 }
