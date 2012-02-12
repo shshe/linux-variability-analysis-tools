@@ -122,14 +122,16 @@ class ExconfigParser extends KExprParser with ImplicitConversions {
       defaults = props collect { case x: Default => x },
       selects = props collect { case x: Select => x },
       ranges = props collect { case x: Range => x },
-      dependsOn = props collect { case x: DependsOn => x })
+      dependsOn = props collect { case x: DependsOn => x },
+      env = props collect { case x: Env => x })
 
 
   private case class Properties(prompts: List[Prompt] = Nil,
                                 defaults: List[Default] = Nil,
                                 selects: List[Select] = Nil,
                                 ranges: List[Range] = Nil,
-                                dependsOn: List[DependsOn] = Nil)
+                                dependsOn: List[DependsOn] = Nil,
+                                env: List[Env] = Nil)
 
 
   private lazy val config =
@@ -138,8 +140,8 @@ class ExconfigParser extends KExprParser with ImplicitConversions {
       {
         case isMenuConfig~Id(name)~t~props~inh~children =>
 
-          val (p, inheritedExpr) =
-              (mkProperties(props), inh getOrElse Yes)
+          val p = mkProperties(props)
+          val inheritedExpr = inh getOrElse Yes
 
           CConfig(-1, name, isMenuConfig, t,
                   inheritedExpr,
@@ -147,6 +149,7 @@ class ExconfigParser extends KExprParser with ImplicitConversions {
                   p.defaults,
                   p.selects,
                   p.ranges,
+                  p.env,
                   p.dependsOn,
                   children)
       }

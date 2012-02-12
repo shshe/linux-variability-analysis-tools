@@ -22,3 +22,6 @@ traceLevel := 10
 javaOptions += "-Xss8192k -Xmx2048m"
 
 scalacOptions := Seq("-deprecation", "-unchecked")
+
+// workaround for "Scaladoc generation failed" on BuilderParent for Protobuf
+publishArtifact in (Compile, packageDoc) := false 
