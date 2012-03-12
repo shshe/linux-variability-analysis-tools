@@ -21,6 +21,7 @@
 package gsd.linux
 
 import org.kiama.rewriting.Rewriter._
+import java.io.PrintStream
 
 /**
  * Builds the Boolean formula for an abstract Kconfig model.
@@ -221,6 +222,23 @@ object BooleanTranslation extends KExprList with BExprList with ExprRewriter {
   def mkBooleanTranslation(k: AbstractKConfig) : BTrans = {
     val pres = mkPresence(k)
     BTrans(pres.exprs ::: mkChoice(k), pres.genVars)
+  }
+}
+
+object BooleanTranslationMain {
+  def main(args: Array[String]) {
+    val k = KConfigParser.parseKConfigFile(args(0))
+    val trans = BooleanTranslation.mkBooleanTranslation(k.toAbstractKConfig)
+    
+    val out = new PrintStream(args(1))
+
+    val ids = (trans.exprs flatMap (_.identifiers)).toSet --  trans.genVars
+    
+    for (id <- ids) out.println("@ " + id)
+    for (id <- trans.genVars) out.println("$ " + id)
+    for (e  <- trans.exprs) out.println(e)
+    
+    out.close()
   }
 }
 

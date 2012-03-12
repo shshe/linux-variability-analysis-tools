@@ -117,14 +117,22 @@ object AbstractSyntax {
         case x => 
           x.children flatMap dfs(parent)
       }
-      
-      val configs = dfs(None)(k.root)
-      
-//      val configs = Rewriter.collectl {
-//        case CConfig(id,name,_,t,inh,ps,defs,_,rngs,_,_) =>
-//          val pro = ((No: KExpr) /: ps){ _ || _.cond }
-//          AConfig(id,name, t, inh, pro, toADefaults(addBaseDefault(t, defs)), rev(name), rngs)
-//      }(k)
+
+      // Push choice visibility down to the choice members
+      val withChoiceVis = Rewriter.rewrite {
+        Rewriter.everywheretd {
+          Rewriter.rule {
+            case x@CChoice(_, Prompt(_, vis), _, _, _, children) =>
+              x.copy (cs = children map {
+                case config => config.copy(prompt = config.prompt map {
+                  case Prompt(text, expr) => Prompt(text, expr && vis)
+                })
+              })
+          }
+        }
+      }(k.root)
+
+      val configs = dfs(None)(withChoiceVis)
 
       val choices = Rewriter.collectl {
         case c: CChoice => mkAChoice(c)
