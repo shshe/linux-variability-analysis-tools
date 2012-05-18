@@ -23,6 +23,7 @@ import collection.mutable.{MultiMap, HashMap}
 
 import TypeFilterList._
 import org.kiama.rewriting.Rewriter
+import Rewriter._
 
 /**
  * @author Steven She (shshe@gsd.uwaterloo.ca)
@@ -45,6 +46,25 @@ object AbstractSyntax {
       AChoice(vis, isBool, isMand, cs map { _.name })
   }
 
+
+
+  /** Strategies to rewrite 'm' to MODULES **/
+
+  // Fail if we detect an equality / inequality
+  val sModEq = strategy {
+    case Eq(Mod, _) | Eq(_,Mod) | NEq(Mod, _) | NEq(_,Mod) => None
+    case x => Some(x)
+  }
+
+  val sMod = rule {
+    case Mod => Id("MODULES")
+  }
+
+  // if ModEq succeeds (i.e. not equality / inequality with Mod), then
+  // apply try to apply sMod. If sMod fails, continue with s (i.e. recurse)
+  //
+  val sDetectMod: Strategy = some(sModEq < (sMod <+ sDetectMod) + fail)
+  
   /**
    * Creates the abstract syntax representation of a concrete KConfig model.
    *
@@ -99,11 +119,16 @@ object AbstractSyntax {
 
       val parentMap = new collection.mutable.HashMap[AConfig, AConfig]()
       val envConfigs = new collection.mutable.ListBuffer[String]()
-      
+
+      // Traverse tree and make changes
       def dfs(parent: Option[AConfig])(curr: CSymbol): List[AConfig] = curr match {
-        case CConfig(id,name,_,t,inh,ps,defs,_,rngs,envs,_,children) =>
+        case CConfig(id,name,_,t,inh,ps,defs,_,rngs,envs,dependsOns,children) =>
           val pro = ((No: KExpr) /: ps){ _ || _.cond }
-          val ac = AConfig(id,name, t, inh, pro, toADefaults(addBaseDefault(t, defs)), rev(name), rngs)
+
+          // Detect if '&& m' exists in the depends on clause
+          val modOnly = sDetectMod(dependsOns).isDefined
+
+          val ac = AConfig(id,name, t, inh, pro, toADefaults(addBaseDefault(t, defs)), rev(name), rngs, modOnly)
 
           // parent map
           if (parent.isDefined)
@@ -119,9 +144,9 @@ object AbstractSyntax {
       }
 
       // Push choice visibility down to the choice members
-      val withChoiceVis = Rewriter.rewrite {
-        Rewriter.everywheretd {
-          Rewriter.rule {
+      val withChoiceVis = rewrite {
+        everywheretd {
+          rule {
             case x@CChoice(_, Prompt(_, vis), _, _, _, children) =>
               x.copy (cs = children map {
                 case config => config.copy(prompt = config.prompt map {
@@ -134,7 +159,7 @@ object AbstractSyntax {
 
       val configs = dfs(None)(withChoiceVis)
 
-      val choices = Rewriter.collectl {
+      val choices = collectl {
         case c: CChoice => mkAChoice(c)
       }(k)
       
