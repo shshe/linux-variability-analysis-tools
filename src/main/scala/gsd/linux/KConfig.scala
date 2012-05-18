@@ -151,7 +151,8 @@ case class AConfig(nodeId: Int,
                    pro: KExpr = Yes,
                    defs: List[ADefault] = Nil,
                    rev: List[KExpr] = Nil, // A disjunction of conditions, the lower-bound
-                   ranges: List[Range] = Nil)
+                   ranges: List[Range] = Nil,
+                   modOnly: Boolean = false)
         extends ASymbol
 
 case class AChoice(vis: KExpr = Yes,
