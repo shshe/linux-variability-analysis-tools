@@ -93,7 +93,32 @@ case class AbstractKConfig(configs: List[AConfig] = Nil,
 
   lazy val idMap: Map[String, Int] =
     (identifiers.toList.zipWithIndex map { case (name, i) => (name, i+1) }).toMap
-  
+
+
+  val sDefault: Term => List[List[(String, KExpr)]] = collectl {
+    case c: AConfig if
+    c.ktype == KStringType ||
+      c.ktype == KIntType ||
+      c.ktype == KHexType => c.defs map {
+      case ADefault(ex, _, _) => c.name -> ex
+    }
+  }
+
+
+  // TODO handle eq / neq between two variables that are non-bool
+  lazy val literalExprs: Set[(String, KExpr)] = {
+    val sExpr = collectl {
+      case Eq(lit@Literal(_), Id(name))  => name -> lit
+      case Eq(Id(name), lit@Literal(_))  => name -> lit
+
+      case NEq(lit@Literal(_), Id(name)) => name -> lit
+      case NEq(Id(name), lit@Literal(_)) => name -> lit
+    }
+
+    ((configs flatMap sExpr) ::: (choices flatMap sExpr) :::
+     (configs flatMap sDefault).flatten[(String, KExpr)]).toSet
+  }
+
   /**
    * Helper function for finding a particular config, probably belongs elsewhere
    */
@@ -116,6 +141,7 @@ case class AbstractKConfig(configs: List[AConfig] = Nil,
     }
     AbstractKConfig(_distinct(configs sortBy (_.name)), choices)
   }
+  
 }
 
 object AbstractKConfig {
@@ -152,7 +178,7 @@ case class AConfig(nodeId: Int,
                    defs: List[ADefault] = Nil,
                    rev: List[KExpr] = Nil, // A disjunction of conditions, the lower-bound
                    ranges: List[Range] = Nil,
-                   modOnly: Boolean = false)
+                   modOnly: Boolean = false) // depends on .. && m
         extends ASymbol
 
 case class AChoice(vis: KExpr = Yes,

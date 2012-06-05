@@ -77,9 +77,7 @@ case class Group(id: Int, e: KExpr) extends KExpr(List(e)) {
 // in the AbstractSyntax to represent an equality between two KExpr.
 case class NonCanonEq(l: KExpr, r: KExpr) extends BinaryOp(l, r, "===")
 
-sealed abstract class IdOrValue extends KExpr(Nil) {
-  def eq(other: IdOrValue): KExpr = Eq(this, other)
-}
+sealed abstract class IdOrValue extends KExpr(Nil)
 sealed abstract class Value extends IdOrValue
 case class Id(value : String) extends IdOrValue
 case class Literal(value : String) extends Value
