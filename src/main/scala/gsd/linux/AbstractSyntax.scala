@@ -159,11 +159,20 @@ object AbstractSyntax {
 
       val configs = dfs(None)(withChoiceVis)
 
+      // Retain only one definition per config in the case of multiple definitions
+      def distinctConfigs(rest: List[AConfig]): List[AConfig] = rest match {
+        case Nil => Nil
+        case head::tail =>
+          head :: distinctConfigs(tail dropWhile (_.name == head.name))
+      }
+      
+      val distinct = distinctConfigs(configs sortBy (_.name))
+
       val choices = collectl {
         case c: CChoice => mkAChoice(c)
       }(k)
       
-      AbstractKConfig(configs, choices, parentMap.toMap, envConfigs.toList)
+      AbstractKConfig(distinct, choices, parentMap.toMap, envConfigs.toList)
     }
   }
 }
