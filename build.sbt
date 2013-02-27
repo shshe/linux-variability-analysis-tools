@@ -1,7 +1,3 @@
-import AssemblyKeys._ // put this at the top of the file
-
-assemblySettings // sbt-assembly plugin
-
 name := "lvat"
 
 version := "0.5-SNAPSHOT"
@@ -31,12 +27,3 @@ scalacOptions := Seq("-deprecation", "-unchecked")
 // workaround for "Scaladoc generation failed" on BuilderParent for Protobuf
 publishArtifact in (Compile, packageDoc) := false 
 
-
-
-// FIXME Merge strategy for assembly
-mergeStrategy in assembly <<= (mergeStrategy in assembly) { (old) =>
-  {
-    case x => MergeStrategy.first
-    // case x => old(x)
-  }
-}
