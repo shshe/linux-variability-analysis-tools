@@ -28,6 +28,18 @@ object BExprParser extends RegexParsers with PackratParsers with ImplicitConvers
     }
   }
 
+
+  abstract sealed class BEq {
+    // TODO serializing equality
+    // def write(out: PrintStream)
+  }
+  
+  case class BLiteralEq(id: String, value: String) extends BEq
+  case class BIntEq(id: String, value: Int) extends BEq
+  case class BHexEq(id: String, value: String) extends BEq
+  case class BStringEq(id: String, value: String) extends BEq
+  case class BVarEq(id: String, value: Int) extends BEq
+
   case class BExprResult(ids: Set[String],
                          genBools: Set[String],
                          genEqs: BExprGenEqs,

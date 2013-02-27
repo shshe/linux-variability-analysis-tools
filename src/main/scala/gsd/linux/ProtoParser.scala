@@ -136,6 +136,7 @@ class ProtoParser extends KConfigParser {
         case NodeType.CHOICE =>
           CChoice(nextId, properties.prompts.head, n.getDataType == BOOLEAN, n.hasOpt,
                   properties.defaults,
+                  properties.dependsOns,
                   n.getChildList.toList map mkSymbol collect { case x:CConfig => x })
 
         case NodeType.IF =>

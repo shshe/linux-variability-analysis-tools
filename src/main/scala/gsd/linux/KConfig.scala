@@ -127,21 +127,6 @@ case class AbstractKConfig(configs: List[AConfig] = Nil,
 
   def findAllConfigs(findName: String): List[AConfig] =
     configs filter (_.name == findName)
-
-  /**
-   * Remove configs with the same name. Used to remove configs for the boolean
-   * tristate conversion since properties are currently duplicated across
-   * all configs with the same name.
-   */
-  def retainOnlyDistinctConfigs: AbstractKConfig = {
-    def _distinct(rest: List[AConfig]): List[AConfig] = rest match {
-      case Nil => Nil
-      case head::tail =>
-        head :: _distinct(tail dropWhile (_.name == head.name))
-    }
-    AbstractKConfig(_distinct(configs sortBy (_.name)), choices)
-  }
-  
 }
 
 object AbstractKConfig {
@@ -223,6 +208,7 @@ case class CChoice(nId: Int,
                    isBool: Boolean,
                    isMand: Boolean,
                    defs: List[Default] = Nil,
+                   depends: List[DependsOn] = Nil,
                    cs: List[CConfig] = Nil)
         extends CSymbol(nId, prompt :: defs, false, cs) {
   override def prettyString = prompt.text

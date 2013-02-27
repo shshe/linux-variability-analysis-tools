@@ -114,7 +114,8 @@ class ExconfigParser extends KExprParser with ImplicitConversions {
         {
           case isBool~isMand~props~cs =>
             val properties = mkProperties(props)
-            CChoice(-1, properties.prompts.head, isBool, isMand, properties.defaults, cs)
+
+            CChoice(-1, properties.prompts.head, isBool, isMand, properties.defaults, properties.dependsOn, cs)
         }
 
   private def mkProperties(props: List[Any]): Properties =
