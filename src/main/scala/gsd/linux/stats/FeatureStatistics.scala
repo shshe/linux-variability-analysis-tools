@@ -97,7 +97,7 @@ class FeatureStatistics(val k: ConcreteKConfig) {
     case CConfig(_,_,_,_,_,pro,defs,sels,rngs,env,_,_) =>
       pro.toList ::: defs ::: sels ::: rngs ::: env
     case CMenu(_,pro,_) => pro
-    case CChoice(_,pro,_,_,defs,_) => pro :: defs
+    case CChoice(_,pro,_,_,defs,_,_) => pro :: defs
   }(k)
 
   lazy val ranges   = properties.typeFilter[Range]

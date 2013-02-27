@@ -208,6 +208,7 @@ case class CChoice(nId: Int,
                    isBool: Boolean,
                    isMand: Boolean,
                    defs: List[Default] = Nil,
+                   depends: List[DependsOn] = Nil,
                    cs: List[CConfig] = Nil)
         extends CSymbol(nId, prompt :: defs, false, cs) {
   override def prettyString = prompt.text
