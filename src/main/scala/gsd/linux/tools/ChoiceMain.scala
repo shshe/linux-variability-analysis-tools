@@ -40,19 +40,19 @@ object ChoiceMain {
     val out = if (args.size > 1) new PrintStream(args(1)) else System.out
 
     val mutex = extract.choices collect {
-      case x@CChoice(_,_,true,false,_,_) => x
+      case x@CChoice(_,_,true,false,_,_,_) => x
     }
 
     val xor   = extract.choices collect {
-      case x@CChoice(_,Prompt(_,Yes),true,true,_,_) => x
+      case x@CChoice(_,Prompt(_,Yes),true,true,_,_,_) => x
     }
 
     val xorC  = (extract.choices collect {
-      case x@CChoice(_,_,true,true,_,_) => x
+      case x@CChoice(_,_,true,true,_,_,_) => x
     }) filterNot (xor contains)
 
     val or    = extract.choices collect {
-      case x@CChoice(_,_,false,true,_,_) => x
+      case x@CChoice(_,_,false,true,_,_,_) => x
     }
 
     println("=== Mutex Groups ===")

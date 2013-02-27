@@ -42,7 +42,7 @@ object AbstractSyntax {
   }
   
   def mkAChoice(c: CChoice) = c match {
-    case CChoice(_,Prompt(_,vis),isBool,isMand,defs,cs) =>
+    case CChoice(_,Prompt(_,vis),isBool,isMand,defs,_,cs) =>
       AChoice(vis, isBool, isMand, cs map { _.name })
   }
 
@@ -144,10 +144,10 @@ object AbstractSyntax {
       }
 
       // Push choice visibility down to the choice members
-      val withChoiceVis = rewrite {
+      val withChoiceVis =
         everywheretd {
           rule {
-            case x@CChoice(_, Prompt(_, vis), _, _, _, children) =>
+            case x@CChoice(_, Prompt(_, vis), _, _, _,_, children) =>
               x.copy (cs = children map {
                 case config => config.copy(prompt = config.prompt map {
                   case Prompt(text, expr) => Prompt(text, expr && vis)
@@ -155,15 +155,33 @@ object AbstractSyntax {
               })
           }
         }
-      }(k.root)
 
-      val configs = dfs(None)(withChoiceVis)
+      val withChoiceDeps =
+        everywheretd {
+          rule {
+            case x@CChoice(_, _, _, _, _, deps, children) =>
+              x.copy (cs = children map {
+                case config => config.copy(depends = config.depends ::: deps)
+              })
+          }
+        }
+
+      val configs = dfs(None)(rewrite(withChoiceVis + withChoiceDeps)(k.root))
+
+      // Retain only one definition per config in the case of multiple definitions
+      def distinctConfigs(rest: List[AConfig]): List[AConfig] = rest match {
+        case Nil => Nil
+        case head::tail =>
+          head :: distinctConfigs(tail dropWhile (_.name == head.name))
+      }
+      
+      val distinct = distinctConfigs(configs sortBy (_.name))
 
       val choices = collectl {
         case c: CChoice => mkAChoice(c)
       }(k)
       
-      AbstractKConfig(configs, choices, parentMap.toMap, envConfigs.toList)
+      AbstractKConfig(distinct, choices, parentMap.toMap, envConfigs.toList)
     }
   }
 }
