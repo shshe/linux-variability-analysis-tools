@@ -17,20 +17,35 @@ trait VisibilityStatistics {
     c.prompt exists { _.cond != Yes }
   }
 
-  // Configs with defaults that have the same condition as its prompt
-  lazy val configsWithTrueDefs = ppk.allConfigs filter { c =>
-    c.defs exists { d => c.prompt exists { _.cond == d.cond } }
-  } distinct
+  //
+  // The next four statistics should partition the set of configs
+  //
 
-  // Configs with defaults that have a condition different from its prompt
-  lazy val configsWithCondDerived = ppk.allConfigs filter { c =>
-    c.defs exists  { d => c.prompt exists { _.cond != d.cond } }
-  } distinct
 
   // Configs that are NEVER user-selectable
   lazy val configsWithUncondDerived = ppk.allConfigs filter { c =>
-    c.prompt.isEmpty
+    c.prompt.isEmpty || (c.prompt forall { p => p.cond == No })
   }
+
+  // Configs that are user-selectable, and no have no default
+  lazy val configsWithNoDefaults = ppk.allConfigs filter { c=>
+    !c.prompt.isEmpty && c.defs.isEmpty
+  }
+
+  // Configs with defaults that have the same condition as its prompt
+  lazy val configsWithTrueDefs = (ppk.allConfigs filter { c =>
+    !c.prompt.isEmpty && !c.defs.isEmpty && (c.defs forall { d => c.prompt exists { _.cond == d.cond } })
+  })
+
+  // Configs with defaults that have a condition different from its prompt
+  lazy val configsWithCondDerived = (ppk.allConfigs filter { c =>
+    !c.prompt.isEmpty && !c.defs.isEmpty && (c.defs exists { d => c.prompt exists { _.cond != d.cond } })
+  })
+
+  //
+  // ------------------------------------------------------------------------
+  //
+
 
   lazy val configsWithRevDeps =
     apk.configs filter { !_.rev.isEmpty }
