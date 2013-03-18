@@ -22,6 +22,7 @@ package gsd.linux.stats
 
 import org.kiama.rewriting.Rewriter._
 import gsd.linux._
+import FeatureStatistics._
 
 import TypeFilterList._
 
@@ -35,10 +36,12 @@ class FeatureStatistics(val k: ConcreteKConfig) {
   lazy val configs = collectl {
     case c: CConfig if !c.isMenuConfig => c
   }(k)
+  def configNames = asNames(configs)
 
   lazy val menuconfigs = collectl {
     case c: CConfig if  c.isMenuConfig => c
   }(k)
+  def menuconfigNames = asNames(menuconfigs)
 
   lazy val menus = collectl {
     case m: CMenu => m
@@ -51,14 +54,20 @@ class FeatureStatistics(val k: ConcreteKConfig) {
   lazy val allConfigs = collectl {
     case c: CConfig => c
   }(k)
+  def allConfigNames = asNames(allConfigs)
 
   lazy val features = configs ++ menuconfigs ++ menus ++ choices
 
-  lazy val boolConfigs   = allConfigs.filter { _.ktype == KBoolType }
-  lazy val triConfigs    = allConfigs.filter { _.ktype == KTriType }
-  lazy val stringConfigs = allConfigs.filter { _.ktype == KStringType }
+  lazy val boolConfigs    = allConfigs.filter { _.ktype == KBoolType }
+  def boolConfigNames     = asNames(boolConfigs)
+  lazy val triConfigs     = allConfigs.filter { _.ktype == KTriType }
+  def triConfigNames      = asNames(triConfigs)
+  lazy val stringConfigs  = allConfigs.filter { _.ktype == KStringType }
+  def stringConfigNames   = asNames(stringConfigs)
   lazy val intConfigs     = allConfigs.filter { _.ktype == KIntType }
+  def intConfigNames      = asNames(intConfigs)
   lazy val hexConfigs     = allConfigs.filter { _.ktype == KHexType }
+  def hexConfigNames      = asNames(hexConfigs)
 
   lazy val promptConfigs    = allConfigs.filter { _.prompt.size > 0 }
   lazy val nonPromptConfigs = allConfigs filterNot (promptConfigs contains)
@@ -87,7 +96,7 @@ class FeatureStatistics(val k: ConcreteKConfig) {
       case _ =>
         elem.children.flatMap { addChildren(depth+1) }
     }
-    addChildren(0)(k.root) toMap
+    (addChildren(0)(k.root)).toMap
   }
 
   lazy val branchingMap : Map[CSymbol,List[CSymbol]] =
@@ -113,4 +122,8 @@ class FeatureStatistics(val k: ConcreteKConfig) {
 object FeatureStatistics {
   def apply(file: String) =
     new FeatureStatistics(KConfigParser.parseKConfigFile(file))
+
+  def asNames(in: Iterable[CConfig]): Set[String] =
+    (in map (_.name)).toSet
+
 }

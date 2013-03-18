@@ -24,6 +24,7 @@ import collection.mutable.{MultiMap, HashMap}
 import TypeFilterList._
 import org.kiama.rewriting.Rewriter
 import Rewriter._
+import annotation.tailrec
 
 /**
  * @author Steven She (shshe@gsd.uwaterloo.ca)
@@ -169,19 +170,24 @@ object AbstractSyntax {
       val configs = dfs(None)(rewrite(withChoiceVis + withChoiceDeps)(k.root))
 
       // Retain only one definition per config in the case of multiple definitions
-      def distinctConfigs(rest: List[AConfig]): List[AConfig] = rest match {
-        case Nil => Nil
-        case head::tail =>
-          head :: distinctConfigs(tail dropWhile (_.name == head.name))
+      val distinct = new collection.mutable.ListBuffer[AConfig]
+      @tailrec
+      def distinctConfigs(rest: List[AConfig]) {
+        rest match {
+          case Nil => Nil
+          case head::tail =>
+            distinct += head
+            distinctConfigs(tail dropWhile (_.name == head.name))
+        }
       }
       
-      val distinct = distinctConfigs(configs sortBy (_.name))
+      distinctConfigs(configs sortBy (_.name))
 
       val choices = collectl {
         case c: CChoice => mkAChoice(c)
       }(k)
       
-      AbstractKConfig(distinct, choices, parentMap.toMap, envConfigs.toList)
+      AbstractKConfig(distinct.toList, choices, parentMap.toMap, envConfigs.toList)
     }
   }
 }
