@@ -1,10 +1,15 @@
 name := "lvat"
 
-version := "0.5-SNAPSHOT"
+version := "1.0-SNAPSHOT"
 
-organization := "ca.uwaterloo.gsd"
+//organization := "com.google.code.linux-variability-analysis-tools"
+organization := "com.googlecode.linux-variability-analysis-tools"
 
 scalaVersion := "2.9.0-1"
+
+licenses := Seq("GPL-2.0" -> url("http://www.opensource.org/licenses/gpl-2.0.php"))
+
+homepage := Some(url("http://linux-variability-analysis-tools.googlecode.com"))
 
 libraryDependencies ++= Seq(
     "org.scala-lang" % "scala-swing" % "2.9.0-1",
@@ -27,3 +32,25 @@ scalacOptions := Seq("-deprecation", "-unchecked")
 // workaround for "Scaladoc generation failed" on BuilderParent for Protobuf
 publishArtifact in (Compile, packageDoc) := false 
 
+publishMavenStyle := true
+
+publishTo <<= version { (v: String) =>
+  val nexus = "https://oss.sonatype.org/"
+  if (v.trim.endsWith("SNAPSHOT"))
+    Some("snapshots" at nexus + "content/repositories/snapshots")
+  else
+    Some("releases"  at nexus + "service/local/staging/deploy/maven2")
+}
+
+pomExtra := (
+  <scm>
+    <url>https://code.google.com/p/linux-variability-analysis-tools/</url>
+    <connection>scm:hg:https://code.google.com/p/linux-variability-analysis-tools/</connection>
+  </scm>
+  <developers>
+    <developer>
+      <id>shshe</id>
+      <name>Steven She</name>
+      <url>http://www.stevenshe.ca</url>
+    </developer>
+  </developers>)
