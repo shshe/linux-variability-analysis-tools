@@ -13,7 +13,7 @@ class ASEStatistics(val ck: ConcreteKConfig)
   lazy val boolType = boolConfigs
   lazy val tristateType = triConfigs
 
-  // Post-processed ConcreteKConfig (removed inherited and depends on)
+  // Post-processed ConcreteKConfig (removed inherited and depends on from property conditions)
   lazy val ppk = ASEStatistics.removeInheritedAndDependsOn(ck)
   lazy val apk = ppk.toAbstractKConfig
 
@@ -101,5 +101,6 @@ object ASEStatistics {
 
   def removeInheritedAndDependsOn(ck: ConcreteKConfig): ConcreteKConfig =
   removeDependsOn(removeInherited(ck))
+
 
 }
