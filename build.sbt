@@ -2,7 +2,6 @@ name := "lvat"
 
 version := "1.0-SNAPSHOT"
 
-//organization := "com.google.code.linux-variability-analysis-tools"
 organization := "com.googlecode.linux-variability-analysis-tools"
 
 scalaVersion := "2.9.0-1"
