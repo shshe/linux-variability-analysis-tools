@@ -4,19 +4,19 @@ version := "1.0-SNAPSHOT"
 
 organization := "com.googlecode.linux-variability-analysis-tools"
 
-scalaVersion := "2.9.0-1"
+scalaVersion in ThisBuild := "2.9.0-1"
 
 licenses := Seq("GPL-2.0" -> url("http://www.opensource.org/licenses/gpl-2.0.php"))
 
 homepage := Some(url("http://linux-variability-analysis-tools.googlecode.com"))
 
 libraryDependencies ++= Seq(
-    "org.scala-lang" % "scala-swing" % "2.9.0-1",
+   "org.scala-lang" % "scala-swing" % "2.9.0-1",
     "com.novocode" % "junit-interface" % "0.6" % "test",
     "junit" % "junit" % "4.8.2" % "test",
-    "org.scalatest" % "scalatest_2.9.0" % "1.6.1" % "test",
+    "org.scalatest" %% "scalatest" % "1.6.1" % "test",
     "com.google.protobuf" % "protobuf-java" % "2.4.1",
-    "com.googlecode" % "kiama_2.9.0-1" % "1.1.0"
+    "com.googlecode" %% "kiama" % "1.1.0"
 )
 
 resolvers += "Local Maven Repository" at Path.userHome.asURL + "/.m2/repository"
